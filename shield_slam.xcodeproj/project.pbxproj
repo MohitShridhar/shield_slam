@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF18E7A11B05B4FE002ED886 /* ORB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF18E7A01B05B4FE002ED886 /* ORB.cpp */; };
+		AF18E7A41B066B3C002ED886 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF18E7A31B066B3C002ED886 /* main.cpp */; };
 		AF3355B41B05A644007E810F /* VSlam.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF3355B31B05A644007E810F /* VSlam.cpp */; };
 		AFADA48A1AF34EC400EBDC31 /* DeepBelief.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */; };
 		AFADA48B1AF34F8800EBDC31 /* DeepBelief.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */; };
@@ -26,6 +28,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AF18E7A01B05B4FE002ED886 /* ORB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ORB.cpp; path = shield_slam/ORB.cpp; sourceTree = "<group>"; };
+		AF18E7A21B05B50B002ED886 /* ORB.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ORB.hpp; path = shield_slam/ORB.hpp; sourceTree = "<group>"; };
+		AF18E7A31B066B3C002ED886 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = shield_slam/main.cpp; sourceTree = "<group>"; };
+		AF18E7A51B0671D2002ED886 /* Common.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Common.hpp; path = shield_slam/Common.hpp; sourceTree = "<group>"; };
 		AF3355B31B05A644007E810F /* VSlam.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VSlam.cpp; path = shield_slam/VSlam.cpp; sourceTree = "<group>"; };
 		AF3355B51B05A764007E810F /* VSlam.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = VSlam.hpp; path = shield_slam/VSlam.hpp; sourceTree = "<group>"; };
 		AFADA4571AF3469B00EBDC31 /* shield_slam */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = shield_slam; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -47,8 +53,12 @@
 		AFADA44E1AF3469B00EBDC31 = {
 			isa = PBXGroup;
 			children = (
+				AF18E7A31B066B3C002ED886 /* main.cpp */,
 				AF3355B51B05A764007E810F /* VSlam.hpp */,
 				AF3355B31B05A644007E810F /* VSlam.cpp */,
+				AF18E7A21B05B50B002ED886 /* ORB.hpp */,
+				AF18E7A01B05B4FE002ED886 /* ORB.cpp */,
+				AF18E7A51B0671D2002ED886 /* Common.hpp */,
 				AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */,
 				AFADA4581AF3469B00EBDC31 /* Products */,
 			);
@@ -114,6 +124,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF3355B41B05A644007E810F /* VSlam.cpp in Sources */,
+				AF18E7A11B05B4FE002ED886 /* ORB.cpp in Sources */,
+				AF18E7A41B066B3C002ED886 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
