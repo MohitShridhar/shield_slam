@@ -16,7 +16,7 @@ namespace vslam
 
 int main(int argc, char** argv)
 {
-    VideoCapture cap("/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/project2/Project2/Project2/test-videos/mona-lisa-blur.avi");
+    VideoCapture cap("/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/indoor.avi");
     
     if (!cap.isOpened())
     {
@@ -33,6 +33,9 @@ int main(int argc, char** argv)
         cap >> frame;
         if (frame.empty())
             break;
+        
+        imshow("Input", frame);
+        waitKey(0);
         
         if (waitKey(30) == 27)
         {
