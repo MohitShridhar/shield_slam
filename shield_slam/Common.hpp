@@ -10,7 +10,7 @@
 namespace vslam
 {
     
-    typedef std::vector<cv::Point2f> PointArray;
+    typedef std::vector<cv::KeyPoint> KeypointArray;
 }
 
 #endif

@@ -18,8 +18,15 @@ int main(int argc, char** argv)
     Mat frame;
     cap >> frame;
     
+    int frame_increments = 20;
+    
     for ( ; ; )
     {
+        for (int i=0; i<frame_increments; i++)
+        {
+            cap >> frame;
+        }
+        
         cap >> frame;
         if (frame.empty())
             break;

@@ -28,6 +28,26 @@
       shouldUseLaunchSchemeArgsEnv = "YES"
       buildConfiguration = "Debug">
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AF18E7AC1B067FE1002ED886"
+               BuildableName = "shield_slam Tests.xctest"
+               BlueprintName = "shield_slam Tests"
+               ReferencedContainer = "container:shield_slam.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AF18E7E11B06804E002ED886"
+               BuildableName = "ORB_testTests.xctest"
+               BlueprintName = "ORB_testTests"
+               ReferencedContainer = "container:shield_slam.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <MacroExpansion>
          <BuildableReference
