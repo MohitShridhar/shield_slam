@@ -30,7 +30,7 @@ namespace vslam {
         extractor->compute(img, img_keypoints, img_desc);
     }
     
-    void ORB::MatchFeatures(Mat &desc_ref, Mat &desc_tar, vector<cv::DMatch> matches, bool use_ratio_test)
+    void ORB::MatchFeatures(Mat &desc_ref, Mat &desc_tar, vector<cv::DMatch> &matches, bool use_ratio_test)
     {
         if (desc_ref.empty() || desc_tar.empty())
         {

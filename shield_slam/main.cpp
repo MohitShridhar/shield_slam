@@ -14,11 +14,25 @@ int main(int argc, char** argv)
         return -1;
     }
     
+    int frame_increments = 20;
     
+    vslam::VSlam slam;
+    
+    // Initialize:
     Mat frame;
     cap >> frame;
     
-    int frame_increments = 20;
+    vector<Mat> init_imgs;
+    init_imgs.push_back(frame.clone());
+    
+    for (int i=0; i<frame_increments; i++)
+    {
+        cap >> frame;
+    }
+    
+    init_imgs.push_back(frame.clone());
+    slam.Initialize(init_imgs);
+
     
     for ( ; ; )
     {
@@ -31,8 +45,8 @@ int main(int argc, char** argv)
         if (frame.empty())
             break;
         
-        imshow("Input", frame);
-        waitKey(0);
+//        imshow("Input", frame);
+//        waitKey(0);
         
         if (waitKey(30) == 27)
         {

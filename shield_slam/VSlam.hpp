@@ -1,6 +1,13 @@
 #ifndef __shield_slam__VSlam__
 #define __shield_slam__VSlam__
 
+#include <opencv2/opencv.hpp>
+
+#include "Initializer.hpp"
+
+using namespace cv;
+using namespace std;
+
 namespace vslam
 {
     
@@ -9,10 +16,15 @@ namespace vslam
     public:
         
         VSlam();
-        
         virtual ~VSlam() = default;
         
+        void Initialize(vector<Mat>& init_imgs);
+        void ProcessFrame(Mat& img);
+        
     private:
+        
+        Initializer initializer;
+        
         
     };
     
