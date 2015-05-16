@@ -64,22 +64,22 @@
 		AF18E7A21B05B50B002ED886 /* ORB.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ORB.hpp; path = shield_slam/ORB.hpp; sourceTree = "<group>"; };
 		AF18E7A31B066B3C002ED886 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = shield_slam/main.cpp; sourceTree = "<group>"; };
 		AF18E7A51B0671D2002ED886 /* Common.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Common.hpp; path = shield_slam/Common.hpp; sourceTree = "<group>"; };
-		AF18E7AD1B067FE1002ED886 /* shield_slam Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = "shield_slam Tests.xctest"; path = "/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/build/Debug/shield_slam Tests.xctest"; sourceTree = "<absolute>"; };
 		AF18E7AF1B067FE1002ED886 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
-		AF18E7C31B06804E002ED886 /* ORB_test.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = ORB_test.app; path = /Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/build/Debug/ORB_test.app; sourceTree = "<absolute>"; };
 		AF18E7C41B06804E002ED886 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		AF18E7C71B06804E002ED886 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		AF18E7C81B06804E002ED886 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		AF18E7C91B06804E002ED886 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		AF18E7E21B06804E002ED886 /* ORB_testTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = ORB_testTests.xctest; path = /Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/build/Debug/ORB_testTests.xctest; sourceTree = "<absolute>"; };
-		AF18E7FA1B068111002ED886 /* orb_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = orb_test; path = /Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/build/Debug/orb_test; sourceTree = "<absolute>"; };
 		AF18E8041B06909B002ED886 /* Initializer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Initializer.cpp; path = shield_slam/Initializer.cpp; sourceTree = "<group>"; };
 		AF18E8061B0690AA002ED886 /* Initializer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Initializer.hpp; path = shield_slam/Initializer.hpp; sourceTree = "<group>"; };
 		AF18E8071B06E035002ED886 /* CameraIntrinsics.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CameraIntrinsics.yaml; path = shield_slam/CameraIntrinsics.yaml; sourceTree = "<group>"; };
 		AF18E8081B06EC7E002ED886 /* Common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Common.cpp; path = shield_slam/Common.cpp; sourceTree = "<group>"; };
+		AF18E80A1B073FB1002ED886 /* shield_slam */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = shield_slam; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF18E80B1B073FB1002ED886 /* shield_slam Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "shield_slam Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF18E80C1B073FB1002ED886 /* ORB_test.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ORB_test.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF18E80D1B073FB1002ED886 /* ORB_testTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ORB_testTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF18E80E1B073FB1002ED886 /* orb_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = orb_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF3355B31B05A644007E810F /* VSlam.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VSlam.cpp; path = shield_slam/VSlam.cpp; sourceTree = "<group>"; };
 		AF3355B51B05A764007E810F /* VSlam.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = VSlam.hpp; path = shield_slam/VSlam.hpp; sourceTree = "<group>"; };
-		AFADA4571AF3469B00EBDC31 /* shield_slam */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = shield_slam; path = /Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/build/Debug/shield_slam; sourceTree = "<absolute>"; };
 		AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DeepBelief.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -162,6 +162,11 @@
 				AF18E8071B06E035002ED886 /* CameraIntrinsics.yaml */,
 				AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */,
 				AF18E7AE1B067FE1002ED886 /* Frameworks */,
+				AF18E80A1B073FB1002ED886 /* shield_slam */,
+				AF18E80B1B073FB1002ED886 /* shield_slam Tests.xctest */,
+				AF18E80C1B073FB1002ED886 /* ORB_test.app */,
+				AF18E80D1B073FB1002ED886 /* ORB_testTests.xctest */,
+				AF18E80E1B073FB1002ED886 /* orb_test */,
 			);
 			sourceTree = "<group>";
 		};
@@ -183,7 +188,7 @@
 			);
 			name = "shield_slam Tests";
 			productName = "shield_slam Tests";
-			productReference = AF18E7AD1B067FE1002ED886 /* shield_slam Tests.xctest */;
+			productReference = AF18E80B1B073FB1002ED886 /* shield_slam Tests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		AF18E7C21B06804E002ED886 /* ORB_test */ = {
@@ -200,7 +205,7 @@
 			);
 			name = ORB_test;
 			productName = ORB_test;
-			productReference = AF18E7C31B06804E002ED886 /* ORB_test.app */;
+			productReference = AF18E80C1B073FB1002ED886 /* ORB_test.app */;
 			productType = "com.apple.product-type.application";
 		};
 		AF18E7E11B06804E002ED886 /* ORB_testTests */ = {
@@ -218,7 +223,7 @@
 			);
 			name = ORB_testTests;
 			productName = ORB_testTests;
-			productReference = AF18E7E21B06804E002ED886 /* ORB_testTests.xctest */;
+			productReference = AF18E80D1B073FB1002ED886 /* ORB_testTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		AF18E7F91B068111002ED886 /* orb_test */ = {
@@ -235,7 +240,7 @@
 			);
 			name = orb_test;
 			productName = orb_test;
-			productReference = AF18E7FA1B068111002ED886 /* orb_test */;
+			productReference = AF18E80E1B073FB1002ED886 /* orb_test */;
 			productType = "com.apple.product-type.tool";
 		};
 		AFADA4561AF3469B00EBDC31 /* shield_slam */ = {
@@ -252,7 +257,7 @@
 			);
 			name = shield_slam;
 			productName = Project2;
-			productReference = AFADA4571AF3469B00EBDC31 /* shield_slam */;
+			productReference = AF18E80A1B073FB1002ED886 /* shield_slam */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
