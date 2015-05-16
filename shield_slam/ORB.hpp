@@ -22,7 +22,14 @@ namespace vslam {
         virtual ~ORB() = default;
         
         void ExtractFeatures (Mat& img, KeypointArray& img_keypoints, Mat& img_desc);
-        void MatchFeatures (Mat& desc_ref, Mat& desc_tar, vector<DMatch>& matches, bool use_ratio_test = true);
+        
+        void MatchFeatures (Mat& desc_ref, Mat& desc_tar, vector<DMatch>& matches,
+                            KeypointArray& ref_keypoints, KeypointArray& tar_keypoints,
+                            PointArray& ref_matches, PointArray& tar_matches,
+                            bool use_ratio_test = true);
+        
+        void DetectAndMatch (Mat& img_ref, Mat& img_tar, vector<DMatch>& matches,
+                             PointArray& ref_matches, PointArray& tar_matches);
         
     private:
         

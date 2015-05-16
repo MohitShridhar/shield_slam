@@ -18,13 +18,12 @@ namespace vslam
         Initializer();
         virtual ~Initializer() = default;
         
-        void BaseLineTriangulation(vector<Mat>& init_imgs);
+        void InitializeMap(vector<Mat>& init_imgs);
+        
         
     private:
         
         Ptr<ORB> orb_handler;
-        
-        
     };
     
 }

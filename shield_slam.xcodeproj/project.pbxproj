@@ -14,6 +14,7 @@
 		AF18E7E31B06804E002ED886 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF18E7AF1B067FE1002ED886 /* XCTest.framework */; };
 		AF18E7E41B06804E002ED886 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF18E7C41B06804E002ED886 /* Cocoa.framework */; };
 		AF18E8051B06909B002ED886 /* Initializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF18E8041B06909B002ED886 /* Initializer.cpp */; };
+		AF18E8091B06EC7E002ED886 /* Common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF18E8081B06EC7E002ED886 /* Common.cpp */; };
 		AF3355B41B05A644007E810F /* VSlam.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF3355B31B05A644007E810F /* VSlam.cpp */; };
 		AFADA48A1AF34EC400EBDC31 /* DeepBelief.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */; };
 		AFADA48B1AF34F8800EBDC31 /* DeepBelief.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */; };
@@ -74,6 +75,8 @@
 		AF18E7FA1B068111002ED886 /* orb_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = orb_test; path = /Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/build/Debug/orb_test; sourceTree = "<absolute>"; };
 		AF18E8041B06909B002ED886 /* Initializer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Initializer.cpp; path = shield_slam/Initializer.cpp; sourceTree = "<group>"; };
 		AF18E8061B0690AA002ED886 /* Initializer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Initializer.hpp; path = shield_slam/Initializer.hpp; sourceTree = "<group>"; };
+		AF18E8071B06E035002ED886 /* CameraIntrinsics.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CameraIntrinsics.yaml; path = shield_slam/CameraIntrinsics.yaml; sourceTree = "<group>"; };
+		AF18E8081B06EC7E002ED886 /* Common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Common.cpp; path = shield_slam/Common.cpp; sourceTree = "<group>"; };
 		AF3355B31B05A644007E810F /* VSlam.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VSlam.cpp; path = shield_slam/VSlam.cpp; sourceTree = "<group>"; };
 		AF3355B51B05A764007E810F /* VSlam.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = VSlam.hpp; path = shield_slam/VSlam.hpp; sourceTree = "<group>"; };
 		AFADA4571AF3469B00EBDC31 /* shield_slam */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = shield_slam; path = /Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/build/Debug/shield_slam; sourceTree = "<absolute>"; };
@@ -155,6 +158,8 @@
 				AF18E7A21B05B50B002ED886 /* ORB.hpp */,
 				AF18E7A01B05B4FE002ED886 /* ORB.cpp */,
 				AF18E7A51B0671D2002ED886 /* Common.hpp */,
+				AF18E8081B06EC7E002ED886 /* Common.cpp */,
+				AF18E8071B06E035002ED886 /* CameraIntrinsics.yaml */,
 				AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */,
 				AF18E7AE1B067FE1002ED886 /* Frameworks */,
 			);
@@ -349,6 +354,7 @@
 				AF18E8051B06909B002ED886 /* Initializer.cpp in Sources */,
 				AF3355B41B05A644007E810F /* VSlam.cpp in Sources */,
 				AF18E7A11B05B4FE002ED886 /* ORB.cpp in Sources */,
+				AF18E8091B06EC7E002ED886 /* Common.cpp in Sources */,
 				AF18E7A41B066B3C002ED886 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

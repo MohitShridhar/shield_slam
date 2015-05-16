@@ -6,11 +6,17 @@
 #include <functional>
 #include <memory>
 
+using namespace cv;
+using namespace std;
 
 namespace vslam
 {
-    
     typedef std::vector<cv::KeyPoint> KeypointArray;
+    
+    typedef std::vector<cv::Point2f> PointArray; 
+    
+    static Mat camera_matrix, dist_coeff;
+    
 }
 
 #endif

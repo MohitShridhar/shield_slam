@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "Initializer.hpp"
+#include "Common.hpp"
 
 using namespace cv;
 using namespace std;
@@ -25,6 +26,7 @@ namespace vslam
         
         Initializer initializer;
         
+        void LoadIntrinsicParameters(void);
         
     };
     
