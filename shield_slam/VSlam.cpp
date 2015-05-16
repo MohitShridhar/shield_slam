@@ -8,11 +8,12 @@ namespace vslam
     
     VSlam::VSlam()
     {
-        LoadIntrinsicParameters();
+    
     }
     
     void VSlam::Initialize(vector<cv::Mat> &init_imgs)
     {
+        LoadIntrinsicParameters();
         initializer.InitializeMap(init_imgs);
     }
     

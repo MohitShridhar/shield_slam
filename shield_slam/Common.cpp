@@ -4,6 +4,5 @@ using namespace cv;
 
 namespace vslam
 {
-    
-    
+    Mat camera_matrix, dist_coeff;
 }

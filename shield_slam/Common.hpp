@@ -13,10 +13,9 @@ namespace vslam
 {
     typedef std::vector<cv::KeyPoint> KeypointArray;
     
-    typedef std::vector<cv::Point2f> PointArray; 
+    typedef std::vector<cv::Point2f> PointArray;
     
-    static Mat camera_matrix, dist_coeff;
-    
+    extern Mat camera_matrix, dist_coeff;
 }
 
 #endif

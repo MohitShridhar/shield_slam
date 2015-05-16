@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     
     int frame_increments = 20;
     
-    vslam::VSlam slam;
+    vslam::VSlam slam = vslam::VSlam();
     
     // Initialize:
     Mat frame;
