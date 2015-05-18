@@ -74,12 +74,12 @@ namespace vslam {
         MatchFeatures(desc_ref_, desc_tar_, matches, keypoints_ref_, keypoints_tar_, ref_matches, tar_matches);
         
         // Debug:
-//        cout << "Number of matches " << matches.size() << endl;
-//        Mat debug_draw_img;
-//        drawMatches(img_ref, keypoints_ref_, img_tar, keypoints_tar_, matches, debug_draw_img);
-//        
-//        imshow("init orb matches", debug_draw_img);
-//        waitKey(0);
+        cout << "Number of matches " << matches.size() << endl;
+        Mat debug_draw_img;
+        drawMatches(img_ref, keypoints_ref_, img_tar, keypoints_tar_, matches, debug_draw_img);
+        
+        imshow("init orb matches", debug_draw_img);
+        waitKey(0);
         //------
     }
     

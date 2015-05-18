@@ -15,6 +15,7 @@
 		AF18E7E41B06804E002ED886 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF18E7C41B06804E002ED886 /* Cocoa.framework */; };
 		AF18E8051B06909B002ED886 /* Initializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF18E8041B06909B002ED886 /* Initializer.cpp */; };
 		AF18E8091B06EC7E002ED886 /* Common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF18E8081B06EC7E002ED886 /* Common.cpp */; };
+		AF18E8101B07FE04002ED886 /* Visualizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF18E80F1B07FE04002ED886 /* Visualizer.cpp */; };
 		AF3355B41B05A644007E810F /* VSlam.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF3355B31B05A644007E810F /* VSlam.cpp */; };
 		AFADA48A1AF34EC400EBDC31 /* DeepBelief.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */; };
 		AFADA48B1AF34F8800EBDC31 /* DeepBelief.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */; };
@@ -78,9 +79,13 @@
 		AF18E80C1B073FB1002ED886 /* ORB_test.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ORB_test.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF18E80D1B073FB1002ED886 /* ORB_testTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ORB_testTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF18E80E1B073FB1002ED886 /* orb_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = orb_test; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF18E80F1B07FE04002ED886 /* Visualizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Visualizer.cpp; path = shield_slam/Visualizer.cpp; sourceTree = "<group>"; };
+		AF18E8141B07FFBF002ED886 /* Visualizer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Visualizer.hpp; path = shield_slam/Visualizer.hpp; sourceTree = "<group>"; };
 		AF3355B31B05A644007E810F /* VSlam.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VSlam.cpp; path = shield_slam/VSlam.cpp; sourceTree = "<group>"; };
 		AF3355B51B05A764007E810F /* VSlam.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = VSlam.hpp; path = shield_slam/VSlam.hpp; sourceTree = "<group>"; };
 		AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DeepBelief.framework; sourceTree = "<group>"; };
+		AFF2C6CB1B08206900A54419 /* UpdateListener.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = UpdateListener.hpp; path = shield_slam/UpdateListener.hpp; sourceTree = "<group>"; };
+		AFF2C6CC1B099DA300A54419 /* MapPoint.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = MapPoint.hpp; path = shield_slam/MapPoint.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -150,7 +155,6 @@
 		AFADA44E1AF3469B00EBDC31 = {
 			isa = PBXGroup;
 			children = (
-				AF18E7A31B066B3C002ED886 /* main.cpp */,
 				AF3355B51B05A764007E810F /* VSlam.hpp */,
 				AF3355B31B05A644007E810F /* VSlam.cpp */,
 				AF18E8061B0690AA002ED886 /* Initializer.hpp */,
@@ -159,6 +163,11 @@
 				AF18E7A01B05B4FE002ED886 /* ORB.cpp */,
 				AF18E7A51B0671D2002ED886 /* Common.hpp */,
 				AF18E8081B06EC7E002ED886 /* Common.cpp */,
+				AF18E8141B07FFBF002ED886 /* Visualizer.hpp */,
+				AF18E80F1B07FE04002ED886 /* Visualizer.cpp */,
+				AFF2C6CB1B08206900A54419 /* UpdateListener.hpp */,
+				AFF2C6CC1B099DA300A54419 /* MapPoint.hpp */,
+				AF18E7A31B066B3C002ED886 /* main.cpp */,
 				AF18E8071B06E035002ED886 /* CameraIntrinsics.yaml */,
 				AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */,
 				AF18E7AE1B067FE1002ED886 /* Frameworks */,
@@ -359,6 +368,7 @@
 				AF18E8051B06909B002ED886 /* Initializer.cpp in Sources */,
 				AF3355B41B05A644007E810F /* VSlam.cpp in Sources */,
 				AF18E7A11B05B4FE002ED886 /* ORB.cpp in Sources */,
+				AF18E8101B07FE04002ED886 /* Visualizer.cpp in Sources */,
 				AF18E8091B06EC7E002ED886 /* Common.cpp in Sources */,
 				AF18E7A41B066B3C002ED886 /* main.cpp in Sources */,
 			);
@@ -587,8 +597,14 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					/usr/local/include,
+					"/usr/local/include/pcl-1.8",
+					"/usr/local/opt/vtk5/include/vtk-5.10",
+					/usr/local/include/eigen3,
 				);
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				LIBRARY_SEARCH_PATHS = (
+					"/usr/local/opt/vtk5/lib/vtk-5.10",
+					/usr/local/lib,
+				);
 				OTHER_LDFLAGS = (
 					"-lopencv_core",
 					"-lopencv_features2d",
@@ -596,7 +612,25 @@
 					"-lopencv_highgui",
 					"-lopencv_video",
 					"-lopencv_imgproc",
-					"-lopencv_videostab\n-lopencv_video\n-lopencv_ts\n-lopencv_superres\n-lopencv_stitching\n-lopencv_photo\n-lopencv_ocl\n-lopencv_objdetect\n-lopencv_nonfree\n-lopencv_ml\n-lopencv_legacy\n-lopencv_imgproc\n-lopencv_highgui\n-lopencv_gpu\n-lopencv_flann\n-lopencv_features2d\n-lopencv_core\n-lopencv_contrib\n-lopencv_calib3d",
+					"-lopencv_videostab",
+					"-lopencv_video",
+					"-lopencv_ts",
+					"-lopencv_superres",
+					"-lopencv_stitching",
+					"-lopencv_photo",
+					"-lopencv_ocl",
+					"-lopencv_objdetect",
+					"-lopencv_nonfree",
+					"-lopencv_ml",
+					"-lopencv_legacy",
+					"-lopencv_imgproc",
+					"-lopencv_highgui",
+					"-lopencv_gpu",
+					"-lopencv_flann",
+					"-lopencv_features2d",
+					"-lopencv_core",
+					"-lopencv_contrib",
+					"-lopencv_calib3d",
 					"-lopencv_photo",
 					"-lopencv_ts",
 					"-lopencv_stitching",
@@ -605,6 +639,14 @@
 					"-lopencv_objdetect",
 					"-lopencv_calib3d",
 					"-lopencv_contrib",
+					"-lboost_system",
+					"-lboost_thread-mt",
+					"-lpcl_common",
+					"-lpcl_visualization",
+					"-lvtkRendering.5.10",
+					"-lvtkGraphics.5.10",
+					"-lvtkCommon.5.10",
+					"-lvtkFiltering.5.10",
 				);
 				PRODUCT_NAME = shield_slam;
 			};
@@ -621,8 +663,14 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					/usr/local/include,
+					"/usr/local/include/pcl-1.8",
+					"/usr/local/opt/vtk5/include/vtk-5.10",
+					/usr/local/include/eigen3,
 				);
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				LIBRARY_SEARCH_PATHS = (
+					"/usr/local/opt/vtk5/lib/vtk-5.10",
+					/usr/local/lib,
+				);
 				OTHER_LDFLAGS = (
 					"-lopencv_core",
 					"-lopencv_features2d",
@@ -630,7 +678,25 @@
 					"-lopencv_highgui",
 					"-lopencv_video",
 					"-lopencv_imgproc",
-					"-lopencv_videostab\n-lopencv_video\n-lopencv_ts\n-lopencv_superres\n-lopencv_stitching\n-lopencv_photo\n-lopencv_ocl\n-lopencv_objdetect\n-lopencv_nonfree\n-lopencv_ml\n-lopencv_legacy\n-lopencv_imgproc\n-lopencv_highgui\n-lopencv_gpu\n-lopencv_flann\n-lopencv_features2d\n-lopencv_core\n-lopencv_contrib\n-lopencv_calib3d",
+					"-lopencv_videostab",
+					"-lopencv_video",
+					"-lopencv_ts",
+					"-lopencv_superres",
+					"-lopencv_stitching",
+					"-lopencv_photo",
+					"-lopencv_ocl",
+					"-lopencv_objdetect",
+					"-lopencv_nonfree",
+					"-lopencv_ml",
+					"-lopencv_legacy",
+					"-lopencv_imgproc",
+					"-lopencv_highgui",
+					"-lopencv_gpu",
+					"-lopencv_flann",
+					"-lopencv_features2d",
+					"-lopencv_core",
+					"-lopencv_contrib",
+					"-lopencv_calib3d",
 					"-lopencv_photo",
 					"-lopencv_ts",
 					"-lopencv_stitching",
@@ -639,6 +705,14 @@
 					"-lopencv_objdetect",
 					"-lopencv_calib3d",
 					"-lopencv_contrib",
+					"-lboost_system",
+					"-lboost_thread-mt",
+					"-lpcl_common",
+					"-lpcl_visualization",
+					"-lvtkRendering.5.10",
+					"-lvtkGraphics.5.10",
+					"-lvtkCommon.5.10",
+					"-lvtkFiltering.5.10",
 				);
 				PRODUCT_NAME = shield_slam;
 			};
@@ -654,6 +728,7 @@
 				AF18E7BE1B067FE1002ED886 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		AF18E7EF1B06804E002ED886 /* Build configuration list for PBXNativeTarget "ORB_test" */ = {
 			isa = XCConfigurationList;
@@ -662,6 +737,7 @@
 				AF18E7F11B06804E002ED886 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		AF18E7F21B06804E002ED886 /* Build configuration list for PBXNativeTarget "ORB_testTests" */ = {
 			isa = XCConfigurationList;
@@ -670,6 +746,7 @@
 				AF18E7F41B06804E002ED886 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		AF18E8001B068111002ED886 /* Build configuration list for PBXNativeTarget "orb_test" */ = {
 			isa = XCConfigurationList;
@@ -678,6 +755,7 @@
 				AF18E8021B068111002ED886 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		AFADA4521AF3469B00EBDC31 /* Build configuration list for PBXProject "shield_slam" */ = {
 			isa = XCConfigurationList;

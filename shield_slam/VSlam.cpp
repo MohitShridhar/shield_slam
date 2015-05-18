@@ -14,7 +14,7 @@ namespace vslam
     void VSlam::Initialize(vector<cv::Mat> &init_imgs)
     {
         LoadIntrinsicParameters();
-        initializer.InitializeMap(init_imgs);
+        initializer.InitializeMap(init_imgs, global_map_);
     }
     
     void VSlam::LoadIntrinsicParameters()

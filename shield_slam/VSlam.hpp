@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "Initializer.hpp"
+#include "MapPoint.hpp"
 #include "Common.hpp"
 
 using namespace cv;
@@ -22,11 +23,17 @@ namespace vslam
         void Initialize(vector<Mat>& init_imgs);
         void ProcessFrame(Mat& img);
         
+        vector<MapPoint> GetGlobalMap(void) { return global_map_; }
+        
     private:
         
         Initializer initializer;
         
         void LoadIntrinsicParameters(void);
+    
+    protected:
+        
+        vector<MapPoint> global_map_;
         
     };
     

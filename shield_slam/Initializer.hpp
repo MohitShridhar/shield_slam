@@ -5,6 +5,7 @@
 
 #include "ORB.hpp"
 #include "Common.hpp"
+#include "MapPoint.hpp"
 
 using namespace cv;
 using namespace std;
@@ -27,9 +28,15 @@ namespace vslam
         Initializer();
         virtual ~Initializer() = default;
         
-        void InitializeMap(vector<Mat>& init_imgs);
+        void InitializeMap(vector<Mat>& init_imgs, vector<MapPoint>& map);
+        
         float CheckHomography(PointArray& ref_keypoints, PointArray& tar_keypoints, Mat& H_ref2tar, vector<bool>& match_inliers);
         float CheckFundamental(PointArray& ref_keypoints, PointArray& tar_keypoints, Mat& F, vector<bool>& match_inliers);
+        
+        void CameraPoseHomography(Mat& H, Mat& pose);
+        void CameraPoseFundamental(Mat& F, Mat& pose);
+        
+        void FilterInliers(PointArray& ref_keypoints, PointArray& tar_keypoints, vector<bool>& inliers, PointArray& ref_inliers, PointArray& tar_inliers);
         
     private:
         
