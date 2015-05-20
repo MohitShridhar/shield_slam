@@ -15,7 +15,7 @@ namespace vslam
     
     typedef std::vector<cv::Point2f> PointArray;
     
-    extern Mat camera_matrix, dist_coeff;
+    extern Mat camera_matrix, dist_coeff, img_size;
 }
 
 #endif

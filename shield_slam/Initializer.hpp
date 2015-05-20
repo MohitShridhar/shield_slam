@@ -36,11 +36,17 @@ namespace vslam
         void CameraPoseHomography(Mat& H, Mat& pose);
         void CameraPoseFundamental(Mat& F, Mat& pose);
         
+        bool ReconstructHomography(PointArray& ref_keypoints, PointArray& tar_keypoints, Mat& H, Mat& R, Mat& t, vector<Point3f>& points, vector<bool>& triangulated_state);
+        
         void FilterInliers(PointArray& ref_keypoints, PointArray& tar_keypoints, vector<bool>& inliers, PointArray& ref_inliers, PointArray& tar_inliers);
         
     private:
         
         Ptr<ORB> orb_handler;
+        
+    protected:
+        Mat R, t;
+        vector<bool> triangulated_state;
     };
     
 }

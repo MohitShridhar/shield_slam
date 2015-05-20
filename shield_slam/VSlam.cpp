@@ -28,6 +28,7 @@ namespace vslam
         
         fs["cameraMatrix"] >> camera_matrix;
         fs["distCoeffs"] >> dist_coeff;
+        fs["imageSize"] >> img_size;
     }
     
 }

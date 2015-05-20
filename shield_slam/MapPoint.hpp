@@ -14,11 +14,13 @@ namespace vslam {
     {
         
     public:
-    
+        void SetPoint(Point3f coord) { point = coord; }
+        Point3f GetPos(void) { return point; }
+        
     private:
         
     protected:
-        Point3d point;
+        Point3f point;
         
     };
 }

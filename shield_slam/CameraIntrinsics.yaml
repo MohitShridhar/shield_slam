@@ -4,10 +4,16 @@ cameraMatrix: !!opencv-matrix
    rows: 3
    cols: 3
    dt: d
-   data: [ 1., 0., 0., 0., 1., 0., 0., 0., 1. ]
+   data: [ 0.39738586545, 0.,            0.41778421402,
+           0.,            0.78319662809, 0.48249810536,
+           0.,            0.,            1. ]
+imageSize: !!opencv-matrix
+    rows: 2
+    cols: 1
+    dt: f
+    data: [640.0, 480.0]
 distCoeffs: !!opencv-matrix
    rows: 5
    cols: 1
    dt: d
-   data: [ 1.0000000000000001e-01, 1.0000000000000000e-02,
-       -1.0000000000000000e-03, 0., 0. ]
+   data: [ 0., 0., 0., 0., 0. ]

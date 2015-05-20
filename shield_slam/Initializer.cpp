@@ -8,10 +8,10 @@ namespace vslam
     
     Initializer::Initializer()
     {
-        orb_handler = new ORB(500, false);
+        orb_handler = new ORB(1000, false);
     }
     
-    void Initializer::InitializeMap(vector<cv::Mat> &init_imgs, vector<MapPoint>& map)
+    void Initializer::InitializeMap(vector<cv::Mat> &init_imgs, vector<MapPoint> &map)
     {
         Mat img_ref, img_tar;
         
@@ -24,21 +24,20 @@ namespace vslam
         PointArray ref_matches, tar_matches;
         orb_handler->DetectAndMatch(img_ref, img_tar, matches, ref_matches, tar_matches);
         
-        /*
+        
         // Undistort key points using camera intrinsics:
         PointArray undist_ref_matches, undist_tar_matches;
         undistort(ref_matches, undist_ref_matches, camera_matrix, dist_coeff);
         undistort(tar_matches, undist_tar_matches, camera_matrix, dist_coeff);
-        */
         
         // Compute homography and fundamental matrices:
-        Mat H = findHomography(ref_matches, tar_matches, CV_RANSAC, 3);
-        Mat F = findFundamentalMat(ref_matches, tar_matches, CV_FM_RANSAC, 3, 0.99);
+        Mat H = findHomography(undist_ref_matches, undist_tar_matches, CV_RANSAC, 3);
+        Mat F = findFundamentalMat(undist_ref_matches, undist_tar_matches, CV_FM_RANSAC, 3, 0.99);
         
         // Decide between homography and fundamental matrix:
         vector<bool> h_inliers, f_inliers;
-        float SH = CheckHomography(ref_matches, tar_matches, H, h_inliers);
-        float SF = CheckFundamental(ref_matches, tar_matches, F, f_inliers);
+        float SH = CheckHomography(undist_ref_matches, undist_tar_matches, H, h_inliers);
+        float SF = CheckFundamental(undist_ref_matches, undist_tar_matches, F, f_inliers);
         
         float RH = SH / (SH + SF);
         
@@ -46,31 +45,44 @@ namespace vslam
         Mat P1 = Mat::eye(3, 4, CV_64F);
         Mat P2 = P1.clone();
         
+        vector<Point3f> point_cloud_3D;
         // Estimate camera pose based on the model chosen:
         if (RH > HOMOGRAPHY_SELECTION_THRESHOLD)
         {
-            CameraPoseHomography(H, P2);
-            FilterInliers(ref_matches, tar_matches, h_inliers, ref_inliers, tar_inliers);
+//            CameraPoseHomography(H, P2);
+            FilterInliers(undist_ref_matches, undist_tar_matches, h_inliers, ref_inliers, tar_inliers);
+            ReconstructHomography(ref_inliers, tar_inliers, H, R, t, point_cloud_3D, triangulated_state);
         }
         else
         {
-            CameraPoseFundamental(F, P2);
-            FilterInliers(ref_matches, tar_matches, f_inliers, ref_inliers, tar_inliers);
+//            CameraPoseFundamental(F, P2);
+            FilterInliers(undist_ref_matches, undist_tar_matches, f_inliers, ref_inliers, tar_inliers);
         }
         
+        /*
         // Triangulate points in the scene:
         Mat point_cloud_4D;
         triangulatePoints(P1, P2, ref_inliers, tar_inliers, point_cloud_4D);
         
-        // Convert points into homogeneous coordinates:
-        Mat point_cloud_3D = Mat(3, point_cloud_4D.cols, CV_32F);
-        point_cloud_3D.row(0) = point_cloud_4D.row(0) / point_cloud_4D.row(3);
-        point_cloud_3D.row(1) = point_cloud_4D.row(1) / point_cloud_4D.row(3);
-        point_cloud_3D.row(2) = point_cloud_4D.row(2) / point_cloud_4D.row(3);
-        
-        cout << point_cloud_3D << endl;
+        // Save points to global map:
+        for (int i=0; i<point_cloud_4D.cols; i++)
+        {
+            MapPoint map_point;
+            Point3f point_3d;
+            
+            point_3d.x = (point_cloud_4D.at<float>(0, i) / point_cloud_4D.at<float>(3, i)) / img_size.at<float>(0);
+            point_3d.y = (point_cloud_4D.at<float>(1, i) / point_cloud_4D.at<float>(3, i)) / img_size.at<float>(1);
+            point_3d.z = (point_cloud_4D.at<float>(2, i) / point_cloud_4D.at<float>(3, i));
+            
+            cout << point_3d.x << " " << point_3d.y << " " << point_3d.z << endl;
+            
+            map_point.SetPoint(point_3d);
+            map.push_back(map_point);
+        }
+        */
     }
     
+    /*
     // Reference: http://stackoverflow.com/questions/8927771/computing-camera-pose-with-homography-matrix-based-on-4-coplanar-points
     void Initializer::CameraPoseHomography(Mat &H, Mat &pose)
     {
@@ -96,7 +108,7 @@ namespace vslam
         
         pose.col(3) = H.col(2) / t_norm;
         
-        pose = camera_matrix * pose;
+//        pose = camera_matrix * pose;
     }
     
     // Reference: http://subokita.com/2014/03/26/structure-from-motion-using-farnebacks-optical-flow-part-2/
@@ -124,6 +136,152 @@ namespace vslam
                 R1.at<double>(0, 0), R1.at<double>(0, 1), R1.at<double>(0, 2), T1.at<double>(0, 0),
                 R1.at<double>(1, 0), R1.at<double>(1, 1), R1.at<double>(1, 2), T1.at<double>(1, 0),
                 R1.at<double>(2, 0), R1.at<double>(2, 1), R1.at<double>(2, 2), T1.at<double>(2, 0));
+    }
+    */
+    
+    // Reference: https://hal.archives-ouvertes.fr/inria-00075698/document
+    bool Initializer::ReconstructHomography(PointArray &ref_keypoints, PointArray &tar_keypoints, Mat &H, Mat &R, Mat &t, vector<Point3f> &points, vector<bool> &triangulated_state)
+    {
+        assert(ref_keypoints.size() == tar_keypoints.size());
+        int num_inliers = (int)ref_keypoints.size();
+        
+        // A = K^-1 * H * K
+        Mat A = camera_matrix.inv() * H * camera_matrix;
+        
+        // Compute SVD
+        Mat w, U, V_tp, V;
+        SVD::compute(A, w, U, V_tp, cv::SVD::FULL_UV);
+        V = V_tp.t();
+        
+        float s = determinant(U) * determinant(V);
+        
+        float d1 = w.at<float>(0);
+        float d2 = w.at<float>(1);
+        float d3 = w.at<float>(2);
+        
+        // Prepare 8 possible rotation (homography 8DOF), translation and scale matrices:
+        vector<Mat> p_R, p_t, p_n;
+        p_R.reserve(8);
+        p_t.reserve(8);
+        p_n.reserve(8);
+        
+        // 4 possibilities: {e1, e3} : ( {1, 1}, {1, -1}, {-1, 1}, {-1, -1} )
+        float sqrt_prod_x1 = sqrt((d1*d1 - d2*d2) / (d1*d1 - d3*d3));
+        float sqrt_prod_x3 = sqrt((d2*d2 - d3*d3) / (d1*d1 - d3*d3));
+        
+        float x1[] = {sqrt_prod_x1, sqrt_prod_x1, -sqrt_prod_x1, -sqrt_prod_x1};
+        float x3[] = {sqrt_prod_x3, -sqrt_prod_x3, sqrt_prod_x3, -sqrt_prod_x3};
+        
+        // Case: d' > 0
+        float sqrt_prod_sin_theta = sqrt((d1*d1 - d2*d2) * (d2*d2 - d3*d3)) / ((d1+d3) * d2);
+        
+        float cos_theta = (d2*d2 + d1*d3) / ((d1+d3) * d2);
+        float sin_theta[] = {sqrt_prod_sin_theta, -sqrt_prod_sin_theta, -sqrt_prod_sin_theta, sqrt_prod_sin_theta};
+        
+        for (int i=0; i<4; i++)
+        {
+            /* 
+             R' = |cos(theta), 0, -sin(theta)|
+                  |    0,      1,      0,    |
+                  |sin(theta), 0,  cos(theta)|
+            */
+            
+            Mat rotation_prime = Mat::eye(3, 3, CV_64F);
+            rotation_prime.at<double>(0, 0) = cos_theta;
+            rotation_prime.at<double>(0, 2) = -sin_theta[i];
+            rotation_prime.at<double>(2, 0) = sin_theta[i];
+            rotation_prime.at<double>(2, 2) = cos_theta;
+            
+            Mat rotation_mat = s * U * rotation_prime * V_tp;
+            p_R.push_back(rotation_mat);
+            
+            /*
+            t' =          |  x1 |
+                 (d1 - d3)|   0 |
+                          | -x3 |
+            */
+            
+            Mat translation_prime = Mat::zeros(3, 1, CV_64F);
+            translation_prime.at<double>(0) = x1[i];
+            translation_prime.at<double>(2) = -x3[i];
+            translation_prime *= (d1-d3);
+            
+            Mat translation_mat = U * translation_prime;
+            p_t.push_back(translation_mat / norm(translation_mat));
+            
+            /*
+            n' = | x1 |
+                 | 0  |
+                 |-x3 |
+            */
+            
+            Mat scale_prime = Mat::zeros(3, 1, CV_64F);
+            scale_prime.at<double>(0) = x1[i];
+            scale_prime.at<double>(2) = x3[i];
+            
+            Mat scale_mat = V * scale_prime;
+            if (scale_mat.at<float>(2) < 0)
+                scale_mat = -scale_mat;
+            p_n.push_back(scale_mat);
+        }
+        
+        // Case: d' < 0
+        float sqrt_prod_phi = sqrt((d1*d1 - d2*d2) * (d2*d2 - d3*d3)) / ((d1-d3) * d2);
+        
+        float cos_phi = (d1*d3 - d2*d2) / ((d1-d3) * d2);
+        float sin_phi[] = {sqrt_prod_phi, -sqrt_prod_phi, -sqrt_prod_phi, sqrt_prod_phi};
+        
+        for (int i=0; i<4; i++)
+        {
+            /*
+             R' = |cos(phi), 0,  sin(phi)|
+                  |    0,   -1,    0,    |
+                  |sin(phi), 0, -cos(phi)|
+             */
+            
+            Mat rotation_prime = Mat::eye(3, 3, CV_64F);
+            rotation_prime.at<double>(0, 0) = cos_phi;
+            rotation_prime.at<double>(0, 2) = sin_phi[i];
+            rotation_prime.at<double>(1, 1) = -1;
+            rotation_prime.at<double>(2, 0) = sin_phi[i];
+            rotation_prime.at<double>(2, 2) = -cos_phi;
+            
+            Mat rotation_mat = s * U * rotation_prime * V_tp;
+            p_R.push_back(rotation_mat);
+            
+            /*
+             t' =          |  x1 |
+                  (d1 + d3)|   0 |
+                           |  x3 |
+             */
+            
+            Mat translation_prime = Mat::zeros(3, 1, CV_64F);
+            translation_prime.at<double>(0) = x1[i];
+            translation_prime.at<double>(2) = x3[i];
+            translation_prime *= (d1+d3);
+            
+            Mat translation_mat = U * translation_prime;
+            p_t.push_back(translation_mat / norm(translation_mat));
+            
+            /*
+             n' = | x1 |
+                  | 0  |
+                  |-x3 |
+             */
+            
+            Mat scale_prime = Mat::zeros(3, 1, CV_64F);
+            scale_prime.at<double>(0) = x1[i];
+            scale_prime.at<double>(2) = x3[i];
+            
+            Mat scale_mat = V * scale_prime;
+            if (scale_mat.at<float>(2) < 0)
+                scale_mat = -scale_mat;
+            p_n.push_back(scale_mat);
+        }
+        
+        
+        
+        return false;
     }
     
     void Initializer::FilterInliers(PointArray &ref_keypoints, PointArray &tar_keypoints, vector<bool> &inliers, PointArray &ref_inliers, PointArray &tar_inliers)
