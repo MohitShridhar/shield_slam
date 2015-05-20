@@ -49,17 +49,17 @@ namespace vslam
         // Estimate camera pose based on the model chosen:
         if (RH > HOMOGRAPHY_SELECTION_THRESHOLD)
         {
-//            CameraPoseHomography(H, P2);
+            CameraPoseHomography(H, P2);
             FilterInliers(undist_ref_matches, undist_tar_matches, h_inliers, ref_inliers, tar_inliers);
-            ReconstructHomography(ref_inliers, tar_inliers, H, R, t, point_cloud_3D, triangulated_state);
+//            ReconstructHomography(ref_inliers, tar_inliers, H, R, t, point_cloud_3D, triangulated_state);
         }
         else
         {
-//            CameraPoseFundamental(F, P2);
+            CameraPoseFundamental(F, P2);
             FilterInliers(undist_ref_matches, undist_tar_matches, f_inliers, ref_inliers, tar_inliers);
         }
         
-        /*
+        
         // Triangulate points in the scene:
         Mat point_cloud_4D;
         triangulatePoints(P1, P2, ref_inliers, tar_inliers, point_cloud_4D);
@@ -79,10 +79,10 @@ namespace vslam
             map_point.SetPoint(point_3d);
             map.push_back(map_point);
         }
-        */
+        
     }
     
-    /*
+    
     // Reference: http://stackoverflow.com/questions/8927771/computing-camera-pose-with-homography-matrix-based-on-4-coplanar-points
     void Initializer::CameraPoseHomography(Mat &H, Mat &pose)
     {
@@ -137,7 +137,7 @@ namespace vslam
                 R1.at<double>(1, 0), R1.at<double>(1, 1), R1.at<double>(1, 2), T1.at<double>(1, 0),
                 R1.at<double>(2, 0), R1.at<double>(2, 1), R1.at<double>(2, 2), T1.at<double>(2, 0));
     }
-    */
+    
     
     // Reference: https://hal.archives-ouvertes.fr/inria-00075698/document
     bool Initializer::ReconstructHomography(PointArray &ref_keypoints, PointArray &tar_keypoints, Mat &H, Mat &R, Mat &t, vector<Point3f> &points, vector<bool> &triangulated_state)
