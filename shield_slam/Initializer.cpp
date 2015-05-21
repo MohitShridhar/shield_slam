@@ -49,9 +49,12 @@ namespace vslam
         // Estimate camera pose based on the model chosen:
         if (RH > HOMOGRAPHY_SELECTION_THRESHOLD)
         {
-            CameraPoseHomography(H, P2);
+//            CameraPoseHomography(H, P2);
             FilterInliers(undist_ref_matches, undist_tar_matches, h_inliers, ref_inliers, tar_inliers);
-//            ReconstructHomography(ref_inliers, tar_inliers, H, R, t, point_cloud_3D, triangulated_state);
+            bool success = ReconstructHomography(ref_inliers, tar_inliers, matches, h_inliers, H, R, t, point_cloud_3D, triangulated_state);
+//            cout << point_cloud_3D << endl;
+            
+//            cout << success << endl;
         }
         else
         {
@@ -60,6 +63,14 @@ namespace vslam
         }
         
         
+        for (int i=0; i<point_cloud_3D.size(); i++)
+        {
+            MapPoint mp;
+            mp.SetPoint(point_cloud_3D.at(i));
+            map.push_back(mp);
+        }
+        
+        /*
         // Triangulate points in the scene:
         Mat point_cloud_4D;
         triangulatePoints(P1, P2, ref_inliers, tar_inliers, point_cloud_4D);
@@ -79,6 +90,7 @@ namespace vslam
             map_point.SetPoint(point_3d);
             map.push_back(map_point);
         }
+        */
         
     }
     
@@ -140,7 +152,7 @@ namespace vslam
     
     
     // Reference: https://hal.archives-ouvertes.fr/inria-00075698/document
-    bool Initializer::ReconstructHomography(PointArray &ref_keypoints, PointArray &tar_keypoints, Mat &H, Mat &R, Mat &t, vector<Point3f> &points, vector<bool> &triangulated_state)
+    bool Initializer::ReconstructHomography(PointArray &ref_keypoints, PointArray &tar_keypoints, vector<DMatch> &matches, vector<bool> &inliers, Mat &H, Mat &R, Mat &t, vector<Point3f> &points, vector<bool> &triangulated_state)
     {
         assert(ref_keypoints.size() == tar_keypoints.size());
         int num_inliers = (int)ref_keypoints.size();
@@ -155,9 +167,14 @@ namespace vslam
         
         float s = determinant(U) * determinant(V);
         
-        float d1 = w.at<float>(0);
-        float d2 = w.at<float>(1);
-        float d3 = w.at<float>(2);
+        float d1 = w.at<double>(0);
+        float d2 = w.at<double>(1);
+        float d3 = w.at<double>(2);
+        
+        if (d3 > d2 || d2 > d1)
+        {
+            return false;
+        }
         
         // Prepare 8 possible rotation (homography 8DOF), translation and scale matrices:
         vector<Mat> p_R, p_t, p_n;
@@ -279,7 +296,39 @@ namespace vslam
             p_n.push_back(scale_mat);
         }
         
+        // Triangulate 3D points for all the 8 possible solutions and find the best R|t:
+        int highest_good_points = 0, sum_good_points = 0, best_trans_idx = -1;
+        float best_parallax = -1.0;
+        vector<Point3f> best_point_cloud;
         
+        for (int i=0; i<8; i++)
+        {
+            float parallax;
+            vector<Point3f> point_cloud;
+            
+            int num_good_points = CheckRt(p_R[i], p_t[i], ref_keypoints, tar_keypoints, inliers, matches, point_cloud, parallax);
+            sum_good_points += num_good_points;
+            
+            if (num_good_points > highest_good_points)
+            {
+                highest_good_points = num_good_points;
+                
+                best_parallax = parallax;
+                best_trans_idx = i;
+                best_point_cloud = point_cloud;
+            }
+        }
+        
+        float normalized_point_score = (1.0f * highest_good_points) / sum_good_points;
+        
+        if (normalized_point_score > TRIANGULATION_NORM_SCORE_TH && best_parallax > PARALLAX_MIN_DEGREES && highest_good_points > TRIANGULATION_GOOD_POINTS_RATIO * num_inliers)
+        {
+            p_R[best_trans_idx].copyTo(R);
+            p_t[best_trans_idx].copyTo(t);
+            points = best_point_cloud;
+            
+            return true;
+        }
         
         return false;
     }
@@ -444,4 +493,131 @@ namespace vslam
         return score;
     }
     
+    int Initializer::CheckRt(Mat &R, Mat &t, const PointArray &ref_keypoints, const PointArray &tar_keypoints, const vector<bool> &inliers, const vector<DMatch> &matches, vector<Point3f> &point_cloud, float& max_parallax)
+    {
+        // Intrinsic parameters (3D->2D) for projection error checking:
+        float cam_fx = camera_matrix.at<double>(0, 0);
+        float cam_fy = camera_matrix.at<double>(1, 1);
+        float cam_cx = camera_matrix.at<double>(0, 2);
+        float cam_cy = camera_matrix.at<double>(1, 2);
+        
+        point_cloud.clear();
+        vector<float> cos_parallaxes;
+        cos_parallaxes.reserve(ref_keypoints.size());
+        
+        // P1 = K[I|0]
+        Mat ref_origin = Mat::zeros(3, 1, CV_64F);
+        Mat P1 = (Mat_<double>(3, 4) << cam_fx, 0.0,    cam_cx, 0.0,
+                                        0.0,    cam_fy, cam_cy, 0.0,
+                                        0.0,    0.0,    1.0,    0.0);
+        
+        // P2 = K[R|t]
+        Mat tar_origin = -R.t()*t;
+        Mat P2 = (Mat_<double>(3, 4) << R.at<double>(0, 0), R.at<double>(0, 1), R.at<double>(0, 2), t.at<double>(0),
+                                        R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2), t.at<double>(1),
+                                        R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2), t.at<double>(2));
+        P2 = camera_matrix * P2;
+        
+        int num_good_points = 0;
+        for (int i=0; i<ref_keypoints.size(); i++)
+        {
+            KeyPoint ref_kp, tar_kp;
+            ref_kp.pt = ref_keypoints.at(i);
+            tar_kp.pt = tar_keypoints.at(i);
+            
+            Mat ref_point_3D;
+            Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
+            
+            // Check that the point is finite:
+            if (!isfinite(ref_point_3D.at<double>(0)) ||
+                !isfinite(ref_point_3D.at<double>(1)) ||
+                !isfinite(ref_point_3D.at<double>(2)))
+            {
+                continue;
+            }
+            
+            // Check parallax:
+            Mat ref_normal = ref_point_3D - ref_origin;
+            float ref_dist = norm(ref_normal);
+            
+            Mat tar_normal = ref_point_3D - tar_origin;
+            float tar_dist = norm(tar_normal);
+            
+            float cos_parallax = ref_normal.dot(tar_normal) / (ref_dist * tar_dist);
+            
+            // Check that the point is in front of the reference camera:
+            if (ref_point_3D.at<double>(2) <= 0.0 && cos_parallax < 0.9998)
+            {
+                continue;
+            }
+            
+            Mat tar_point_3D = R * ref_point_3D + t;
+            
+            // Check that the point is in front of the target camera:
+            if (tar_point_3D.at<double>(2) <= 0.0 && cos_parallax < 0.9998)
+            {
+                continue;
+            }
+            
+            // Check reprojection error for reference image:
+            float ref_reproj_x, ref_reproj_y;
+            ref_reproj_x = cam_fx * (ref_point_3D.at<double>(0) / ref_point_3D.at<double>(2)) + cam_cx;
+            ref_reproj_y = cam_fy * (ref_point_3D.at<double>(1) / ref_point_3D.at<double>(2)) + cam_cy;
+            
+            float ref_square_error = (ref_reproj_x - ref_kp.pt.x) * (ref_reproj_x - ref_kp.pt.x) +
+                                     (ref_reproj_y - ref_kp.pt.y) * (ref_reproj_y - ref_kp.pt.y);
+            
+            if (ref_square_error > REPROJECTION_ERROR_TH)
+            {
+                continue;
+            }
+            
+            // Check reprojection error for target image:
+            float tar_reproj_x, tar_reproj_y;
+            tar_reproj_x = cam_fx * (tar_point_3D.at<double>(0) / tar_point_3D.at<double>(2)) + cam_cx;
+            tar_reproj_y = cam_fy * (tar_point_3D.at<double>(1) / tar_point_3D.at<double>(2)) + cam_cy;
+            
+            float tar_square_error = (tar_reproj_x - tar_kp.pt.x) * (tar_reproj_x - tar_kp.pt.x) +
+                                     (tar_reproj_y - tar_kp.pt.y) * (tar_reproj_y - tar_kp.pt.y);
+            
+            if (tar_square_error > REPROJECTION_ERROR_TH)
+            {
+                continue;
+            }
+            
+            cos_parallaxes.push_back(cos_parallax);
+            point_cloud.push_back(Point3f(tar_point_3D.at<double>(0), tar_point_3D.at<double>(1), tar_point_3D.at<double>(2)));
+            num_good_points++;
+        }
+        
+        // Find the max parallax (in degrees) of the first N=TRIANGULATION_MIN_POINTS points
+        if (num_good_points > 0)
+        {
+            sort(cos_parallaxes.begin(), cos_parallaxes.end());
+            int nth_max_idx = cos_parallaxes.size()-1 > TRIANGULATION_MIN_POINTS ? TRIANGULATION_MIN_POINTS : (int)cos_parallaxes.size()-1;
+            
+            max_parallax = acos(cos_parallaxes.at(nth_max_idx)) * 180/CV_PI;
+        }
+        else
+        {
+            max_parallax = 0.0;
+        }
+        
+        return num_good_points;
+    }
+    
+    void Initializer::Triangulate(const KeyPoint &ref_keypoint, const KeyPoint &tar_keypoint, const Mat &P1, const Mat &P2, Mat &point_3D)
+    {
+        cv::Mat A(4,4,CV_64F);
+        
+        A.row(0) = ref_keypoint.pt.x*P1.row(2)-P1.row(0);
+        A.row(1) = ref_keypoint.pt.y*P1.row(2)-P1.row(1);
+        A.row(2) = tar_keypoint.pt.x*P2.row(2)-P2.row(0);
+        A.row(3) = tar_keypoint.pt.y*P2.row(2)-P2.row(1);
+        
+        cv::Mat u,w,vt;
+        cv::SVD::compute(A,w,u,vt,cv::SVD::MODIFY_A| cv::SVD::FULL_UV);
+        point_3D = vt.row(3).t();
+        point_3D = point_3D.rowRange(0,3)/point_3D.at<float>(3);
+    }
 }

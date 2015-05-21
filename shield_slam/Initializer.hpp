@@ -18,6 +18,13 @@ using namespace std;
 
 #define HOMOGRAPHY_SELECTION_THRESHOLD 0.45
 
+#define REPROJECTION_ERROR_TH 4.0
+#define PARALLAX_MIN_DEGREES 1.0
+
+#define TRIANGULATION_MIN_POINTS 50
+#define TRIANGULATION_NORM_SCORE_TH 0.0
+#define TRIANGULATION_GOOD_POINTS_RATIO 0.9
+
 namespace vslam
 {
     
@@ -36,7 +43,10 @@ namespace vslam
         void CameraPoseHomography(Mat& H, Mat& pose);
         void CameraPoseFundamental(Mat& F, Mat& pose);
         
-        bool ReconstructHomography(PointArray& ref_keypoints, PointArray& tar_keypoints, Mat& H, Mat& R, Mat& t, vector<Point3f>& points, vector<bool>& triangulated_state);
+        bool ReconstructHomography(PointArray& ref_keypoints, PointArray& tar_keypoints, vector<DMatch>& matches, vector<bool>& inliers, Mat& H, Mat& R, Mat& t, vector<Point3f>& points, vector<bool>& triangulated_state);
+        
+        int CheckRt(Mat& R, Mat& t, const PointArray& ref_keypoints, const PointArray& tar_keypoints, const vector<bool>& inliers, const vector<DMatch>& matches, vector<Point3f>& point_cloud, float& max_parallax);
+        void Triangulate(const KeyPoint& ref_keypoint, const KeyPoint& tar_keypoint, const Mat& P1, const Mat& P2, Mat& point_3D);
         
         void FilterInliers(PointArray& ref_keypoints, PointArray& tar_keypoints, vector<bool>& inliers, PointArray& ref_inliers, PointArray& tar_inliers);
         
