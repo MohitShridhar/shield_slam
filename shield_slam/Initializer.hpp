@@ -23,8 +23,12 @@ using namespace std;
 
 #define TRIANGULATION_MIN_POINTS 50
 #define TRIANGULATION_GOOD_POINTS_RATIO 0.9
-#define TRIANGULATION_NORM_SCORE_H_TH 0.0
+
+#define TRIANGULATION_NORM_SCORE_H_TH 0.4
 #define TRIANGULATION_NORM_SCORE_F_TH 0.7
+
+#define TRIANGULATION_LS_ITERATIONS 10
+#define TRIANGULATION_LS_EPSILON 0.0001
 
 namespace vslam
 {
@@ -51,6 +55,8 @@ namespace vslam
         float ScoreRt(vector<Mat>& p_R, vector<Mat>& p_t, const PointArray& ref_keypoints, const PointArray& tar_keypoints, const vector<bool>& inliers, const vector<DMatch>& matches, vector<Point3f>& best_point_cloud, float& best_parallax, int& best_trans_idx);
         
         void Triangulate(const KeyPoint& ref_keypoint, const KeyPoint& tar_keypoint, const Mat& P1, const Mat& P2, Mat& point_3D);
+        Mat_<double> LinearLSTriangulation(const Point3d& u1, const Point3d& u2, const Mat& P1, const Mat& P2);
+        Matx31d IterativeLinearLSTriangulation(const Point3d& u1, const Point3d& u2, const Mat& P1, const Mat& P2);
         
         void FilterInliers(PointArray& ref_keypoints, PointArray& tar_keypoints, vector<bool>& inliers, PointArray& ref_inliers, PointArray& tar_inliers);
         

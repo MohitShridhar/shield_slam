@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     
     for ( ; ; )
     {
-        for (int i=0; i<frame_increments; i++)
+        for (int i=0; i<20; i++)
             cap >> frame;
         
         

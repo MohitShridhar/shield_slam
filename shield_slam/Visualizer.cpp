@@ -24,7 +24,7 @@ void WaitForVisualizationThread()
 void InitializeVisualizer()
 {
     viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "cloud");
-    viewer->addCoordinateSystem (1.0 );
+    viewer->addCoordinateSystem (1);
     viewer->initCameraParameters ();
 }
 

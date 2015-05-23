@@ -11,7 +11,7 @@ namespace vslam
         orb_handler = new ORB(1000, false);
     }
     
-    bool Initializer::InitializeMap(vector<cv::Mat> &init_imgs, vector<MapPoint> &map)
+    bool Initializer::InitializeMap(vector<Mat> &init_imgs, vector<MapPoint> &map)
     {
         Mat img_ref, img_tar;
         
@@ -165,7 +165,7 @@ namespace vslam
         
         // Compute SVD
         Mat w, U, V_tp, V;
-        SVD::compute(A, w, U, V_tp, cv::SVD::FULL_UV);
+        SVD::compute(A, w, U, V_tp, SVD::FULL_UV);
         V = V_tp.t();
         
         float s = determinant(U) * determinant(V);
@@ -425,15 +425,20 @@ namespace vslam
         // P1 = K[I|0]
         Mat ref_origin = Mat::zeros(3, 1, CV_64F);
         Mat P1 = (Mat_<double>(3, 4) << cam_fx, 0.0,    cam_cx, 0.0,
-                  0.0,    cam_fy, cam_cy, 0.0,
-                  0.0,    0.0,    1.0,    0.0);
+                                        0.0,    cam_fy, cam_cy, 0.0,
+                                        0.0,    0.0,    1.0,    0.0);
         
         // P2 = K[R|t]
         Mat tar_origin = -R.t()*t;
         Mat P2 = (Mat_<double>(3, 4) << R.at<double>(0, 0), R.at<double>(0, 1), R.at<double>(0, 2), t.at<double>(0),
-                  R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2), t.at<double>(1),
-                  R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2), t.at<double>(2));
+                                        R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2), t.at<double>(1),
+                                        R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2), t.at<double>(2));
         P2 = camera_matrix * P2;
+        
+        
+        // REMVOE:
+//        Mat ref_imm;
+//        triangulatePoints(P1, P2, ref_keypoints, tar_keypoints, ref_imm);
         
         int num_good_points = 0;
         for (int i=0; i<ref_keypoints.size(); i++)
@@ -445,8 +450,13 @@ namespace vslam
             ref_kp.pt = ref_keypoints[i];
             tar_kp.pt = tar_keypoints[i];
             
-            Mat ref_point_3D;
+            Mat ref_point_3D = Mat(3, 1, CV_64F, Scalar(0));
             Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
+            
+            
+//            ref_point_3D.at<double>(0) = ref_imm.at<float>(0, i) / ref_imm.at<float>(3, i);
+//            ref_point_3D.at<double>(1) = ref_imm.at<float>(1, i) / ref_imm.at<float>(3, i);
+//            ref_point_3D.at<double>(2) = ref_imm.at<float>(2, i) / ref_imm.at<float>(3, i);
             
             // Check that the point is finite:
             if (!isfinite(ref_point_3D.at<double>(0)) ||
@@ -497,18 +507,16 @@ namespace vslam
             tar_reproj_x = cam_fx * (tar_point_3D.at<double>(0) / tar_point_3D.at<double>(2)) + cam_cx;
             tar_reproj_y = cam_fy * (tar_point_3D.at<double>(1) / tar_point_3D.at<double>(2)) + cam_cy;
             
-            cout << tar_reproj_x << " " << tar_kp.pt.x << " " << tar_reproj_y << " " << tar_kp.pt.y << endl;
-            
             float tar_square_error = (tar_reproj_x - tar_kp.pt.x) * (tar_reproj_x - tar_kp.pt.x) +
             (tar_reproj_y - tar_kp.pt.y) * (tar_reproj_y - tar_kp.pt.y);
             
-//            if (tar_square_error > REPROJECTION_ERROR_TH)
-//            {
-//                continue;
-//            }
+            if (tar_square_error > REPROJECTION_ERROR_TH)
+            {
+                continue;
+            }
             
             cos_parallaxes.push_back(cos_parallax);
-            point_cloud.push_back(Point3f(tar_point_3D.at<double>(0), tar_point_3D.at<double>(1), tar_point_3D.at<double>(2)));
+            point_cloud.push_back(Point3f(tar_point_3D.at<double>(0), tar_point_3D.at<double>(1), tar_point_3D.at<double>(2) * 1000));
             num_good_points++;
         }
         
@@ -696,16 +704,78 @@ namespace vslam
     
     void Initializer::Triangulate(const KeyPoint &ref_keypoint, const KeyPoint &tar_keypoint, const Mat &P1, const Mat &P2, Mat &point_3D)
     {
-        cv::Mat A(4,4,CV_64F);
+        Point3d ref_point (ref_keypoint.pt.x, ref_keypoint.pt.y, 1.0);
+        Point3d tar_point (tar_keypoint.pt.x, tar_keypoint.pt.y, 1.0);
         
-        A.row(0) = ref_keypoint.pt.x*P1.row(2)-P1.row(0);
-        A.row(1) = ref_keypoint.pt.y*P1.row(2)-P1.row(1);
-        A.row(2) = tar_keypoint.pt.x*P2.row(2)-P2.row(0);
-        A.row(3) = tar_keypoint.pt.y*P2.row(2)-P2.row(1);
-        
-        cv::Mat u,w,vt;
-        cv::SVD::compute(A,w,u,vt,cv::SVD::MODIFY_A| cv::SVD::FULL_UV);
-        point_3D = vt.row(3).t();
-        point_3D = point_3D.rowRange(0,3)/point_3D.at<float>(3);
+        Matx31d out_3D = IterativeLinearLSTriangulation(ref_point, tar_point, P1, P2);
+        point_3D = Mat(out_3D);
     }
+    
+    // Reference: https://perception.inrialpes.fr/Publications/1997/HS97/HartleySturm-cviu97.pdf & Mastering Practical OpenCV
+    Mat_<double> Initializer::LinearLSTriangulation(const Point3d &u1, const Point3d &u2, const Mat &P1, const Mat &P2)
+    {
+        Matx43d A(
+                      u1.x * P1.at<double>(2,0) - P1.at<double>(0,0), u1.x * P1.at<double>(2,1) - P1.at<double>(0,1), u1.x * P1.at<double>(2,2) - P1.at<double>(0,2),
+                      u1.y * P1.at<double>(2,0) - P1.at<double>(1,0), u1.y * P1.at<double>(2,1) - P1.at<double>(1,1), u1.y * P1.at<double>(2,2) - P1.at<double>(1,2),
+                      u2.x * P2.at<double>(2,0) - P2.at<double>(0,0), u2.x * P2.at<double>(2,1) - P2.at<double>(0,1), u2.x * P2.at<double>(2,2) - P2.at<double>(0,2),
+                      u2.y * P2.at<double>(2,0) - P2.at<double>(1,0), u2.y * P2.at<double>(2,1) - P2.at<double>(1,1), u2.y * P2.at<double>(2,2) - P2.at<double>(1,2)
+                      );
+        Matx41d B(
+                      -( u1.x * P1.at<double>(2,3) - P1.at<double>(0,3) ),
+                      -( u1.y * P1.at<double>(2,3) - P1.at<double>(1,3) ),
+                      -( u2.x * P2.at<double>(2,3) - P2.at<double>(0,3) ),
+                      -( u2.y * P2.at<double>(2,3) - P2.at<double>(1,3) )
+                      );
+        
+        Mat_<double> X;
+        solve( A, B, X, DECOMP_SVD );
+        
+        return X;
+    }
+    
+    Matx31d Initializer::IterativeLinearLSTriangulation(const Point3d &u1, const Point3d &u2, const Mat &P1, const Mat &P2)
+    {
+        double wi1 = 1;
+        double wi2 = 1;
+        
+        Matx41d X;
+        
+        for ( int i = 0; i < TRIANGULATION_LS_ITERATIONS; i++ ) {
+            Mat_<double> X_ = LinearLSTriangulation( u1, u2, P1, P2 );
+            X = Matx41d( X_(0), X_(1), X_(2), 1.0 );
+
+            // Recalculate weights
+            double p2x1 = Mat_<double>( P1.row( 2 ) * Mat(X) ).at<double>(0);
+            double p2x2 = Mat_<double>( P2.row( 2 ) * Mat(X) ).at<double>(0);
+            
+            // Breaking point
+            if ( fabs( wi1 - p2x1 ) <= TRIANGULATION_LS_EPSILON && fabs( wi2 - p2x2 ) <= TRIANGULATION_LS_EPSILON )
+                break;
+            
+            wi1 = p2x1;
+            wi2 = p2x2;
+            
+            // Reweight equations and solve
+            Matx43d A(
+                          ( u1.x * P1.at<double>(2,0) - P1.at<double>(0,0) ) / wi1, ( u1.x * P1.at<double>(2,1) - P1.at<double>(0,1) ) / wi1, ( u1.x * P1.at<double>(2,2) - P1.at<double>(0,2) ) / wi1,
+                          ( u1.y * P1.at<double>(2,0) - P1.at<double>(1,0) ) / wi1, ( u1.y * P1.at<double>(2,1) - P1.at<double>(1,1) ) / wi1, ( u1.y * P1.at<double>(2,2) - P1.at<double>(1,2) ) / wi1,
+                          ( u2.x * P2.at<double>(2,0) - P2.at<double>(0,0) ) / wi2, ( u2.x * P2.at<double>(2,1) - P2.at<double>(0,1) ) / wi2, ( u2.x * P2.at<double>(2,2) - P2.at<double>(0,2) ) / wi2,
+                          ( u2.y * P2.at<double>(2,0) - P2.at<double>(1,0) ) / wi2, ( u2.y * P2.at<double>(2,1) - P2.at<double>(1,1) ) / wi2, ( u2.y * P2.at<double>(2,2) - P2.at<double>(1,2) ) / wi2
+                          );
+            Matx41d B(
+                          -( u1.x * P1.at<double>(2,3) - P1.at<double>(0,3) ) / wi1,
+                          -( u1.y * P1.at<double>(2,3) - P1.at<double>(1,3) ) / wi1,
+                          -( u2.x * P2.at<double>(2,3) - P2.at<double>(0,3) ) / wi2,
+                          -( u2.y * P2.at<double>(2,3) - P2.at<double>(1,3) ) / wi2
+                          );
+            
+            solve( A, B, X_, DECOMP_SVD );
+            X = Matx41d( X_(0), X_(1), X_(2), 1.0 );
+        }
+        
+        return Matx31d( X(0), X(1), X(2) );
+        
+        
+    }
+    
 }
