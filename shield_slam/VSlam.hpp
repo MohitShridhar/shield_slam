@@ -23,6 +23,14 @@ namespace vslam
         void Initialize(vector<Mat>& init_imgs);
         void ProcessFrame(Mat& img);
         
+        enum State{
+            NOT_INITIALIZED = 0,
+            INITIALIZING = 1,
+            TRACKING = 2,
+        };
+        
+        State getCurrState(void) { return curr_state; }
+        
         vector<MapPoint> GetGlobalMap(void) { return global_map_; }
         
     private:
@@ -34,6 +42,8 @@ namespace vslam
     protected:
         
         vector<MapPoint> global_map_;
+        
+        State curr_state, prev_state;
         
     };
     

@@ -19,21 +19,5 @@
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "shield_slam/Initializer.cpp"
-            timestampString = "454046219.086291"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "496"
-            endingLineNumber = "496"
-            landmarkName = "Initializer::CheckRt(Mat &amp;R, Mat &amp;t, const PointArray &amp;ref_keypoints, const PointArray &amp;tar_keypoints, const vector&lt;bool&gt; &amp;inliers, const vector&lt;DMatch&gt; &amp;matches, vector&lt;Point3f&gt; &amp;point_cloud, float&amp; max_parallax)"
-            landmarkType = "5">
-         </BreakpointContent>
-      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

@@ -49,15 +49,22 @@ int main(int argc, char** argv)
     cap >> frame;
     
     vector<Mat> init_imgs;
-    init_imgs.push_back(frame.clone());
+    init_imgs.resize(2);
+    init_imgs.at(0) = frame.clone();
     
-    for (int i=0; i<frame_increments; i++)
+    for ( ; ; )
     {
-        cap >> frame;
+        for (int i=0; i<frame_increments; i++)
+            cap >> frame;
+        
+        
+        init_imgs.at(1) = frame.clone();
+        
+        slam.Initialize(init_imgs);
+        if (slam.getCurrState() == vslam::VSlam::TRACKING)
+            break;
+
     }
-    
-    init_imgs.push_back(frame.clone());
-    slam.Initialize(init_imgs);
     
     // Load Initialized Map:
     vector<MapPoint> global_map = slam.GetGlobalMap();

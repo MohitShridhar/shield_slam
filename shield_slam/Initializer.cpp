@@ -11,7 +11,7 @@ namespace vslam
         orb_handler = new ORB(1000, false);
     }
     
-    void Initializer::InitializeMap(vector<cv::Mat> &init_imgs, vector<MapPoint> &map)
+    bool Initializer::InitializeMap(vector<cv::Mat> &init_imgs, vector<MapPoint> &map)
     {
         Mat img_ref, img_tar;
         
@@ -97,6 +97,7 @@ namespace vslam
         }
         */
         
+        return success;
     }
     
     
@@ -403,6 +404,8 @@ namespace vslam
             }
         }
         
+        if (highest_good_points < TRIANGULATION_MIN_POINTS)
+            return 0.0f;
         
         return (1.0f * highest_good_points) / sum_good_points;
     }

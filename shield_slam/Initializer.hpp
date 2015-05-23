@@ -36,7 +36,7 @@ namespace vslam
         Initializer();
         virtual ~Initializer() = default;
         
-        void InitializeMap(vector<Mat>& init_imgs, vector<MapPoint>& map);
+        bool InitializeMap(vector<Mat>& init_imgs, vector<MapPoint>& map);
         
         float CheckHomography(PointArray& ref_keypoints, PointArray& tar_keypoints, Mat& H_ref2tar, vector<bool>& match_inliers, int& num_inliers);
         float CheckFundamental(PointArray& ref_keypoints, PointArray& tar_keypoints, Mat& F, vector<bool>& match_inliers, int& num_inliers);

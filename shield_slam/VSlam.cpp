@@ -8,13 +8,24 @@ namespace vslam
     
     VSlam::VSlam()
     {
-    
+        curr_state = NOT_INITIALIZED;
     }
     
     void VSlam::Initialize(vector<cv::Mat> &init_imgs)
     {
-        LoadIntrinsicParameters();
-        initializer.InitializeMap(init_imgs, global_map_);
+        if (curr_state == NOT_INITIALIZED)
+        {
+            LoadIntrinsicParameters();
+            curr_state = INITIALIZING;
+        }
+        
+        if (curr_state == INITIALIZING)
+        {
+            if(initializer.InitializeMap(init_imgs, global_map_)) // FIX ME: global should be updated
+            {
+                curr_state = TRACKING;
+            }
+        }
     }
     
     void VSlam::LoadIntrinsicParameters()
