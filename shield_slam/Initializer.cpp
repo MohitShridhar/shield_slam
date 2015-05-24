@@ -21,8 +21,11 @@ namespace vslam
         
         // Undistort key points using camera intrinsics:
         PointArray undist_ref_matches, undist_tar_matches;
-        undistort(ref_matches, undist_ref_matches, camera_matrix, dist_coeff);
-        undistort(tar_matches, undist_tar_matches, camera_matrix, dist_coeff);
+//        undistort(ref_matches, undist_ref_matches, camera_matrix, dist_coeff);
+//        undistort(tar_matches, undist_tar_matches, camera_matrix, dist_coeff);
+        undist_ref_matches = ref_matches;
+        undist_tar_matches = tar_matches;
+        
         
         // Compute homography and fundamental matrices:
         Mat H = findHomography(undist_ref_matches, undist_tar_matches, CV_RANSAC, 3);
@@ -35,6 +38,15 @@ namespace vslam
         float SH = CheckHomography(undist_ref_matches, undist_tar_matches, H, h_inliers, h_num_inliers);
         float SF = CheckFundamental(undist_ref_matches, undist_tar_matches, F, f_inliers, f_num_inliers);
         
+        /*
+        float SH = 0.0f, SF = 0.0f;
+        vector<bool> h_inliers, f_inliers;
+        int h_num_inliers = 0, f_num_inliers;
+        
+        Mat H = FindHomography(undist_ref_matches, undist_tar_matches, SH, h_inliers, h_num_inliers);
+        Mat F = FindFundamental(undist_ref_matches, undist_tar_matches, SF, f_inliers, f_num_inliers);
+        */
+         
         float RH = SH / (SH + SF);
         
         PointArray ref_inliers, tar_inliers;
@@ -147,6 +159,46 @@ namespace vslam
                 R1.at<double>(2, 0), R1.at<double>(2, 1), R1.at<double>(2, 2), T1.at<double>(2, 0));
     }
     
+    Mat Initializer::FindHomography(PointArray &ref_keypoints, PointArray &tar_keypoints, float &score, vector<bool> &match_inliers, int &num_inliers)
+    {
+        Mat H = Mat::eye(3, 3, CV_64F);
+        match_inliers = vector<bool>(ref_keypoints.size(), false);
+        num_inliers = 0;
+        
+        Mat T1, T2;
+        PointArray ref_norm_kp, tar_norm_kp;
+        
+        Normalize(ref_keypoints, ref_norm_kp, T1);
+        Normalize(tar_keypoints, tar_norm_kp, T2);
+        
+        Mat H_norm = findHomography(ref_norm_kp, tar_norm_kp, CV_RANSAC, 3);
+        H = T2.inv() * H_norm * T1;
+        
+        score = CheckHomography(ref_keypoints, tar_keypoints, H, match_inliers, num_inliers);
+        
+        return H;
+    }
+    
+    
+    Mat Initializer::FindFundamental(PointArray &ref_keypoints, PointArray &tar_keypoints, float &score, vector<bool> &match_inliers, int &num_inliers)
+    {
+        Mat F = Mat::eye(3, 3, CV_64F);
+        match_inliers = vector<bool>(ref_keypoints.size(), false);
+        num_inliers = 0;
+        
+        Mat T1, T2;
+        PointArray ref_norm_kp, tar_norm_kp;
+        
+        Normalize(ref_keypoints, ref_norm_kp, T1);
+        Normalize(tar_keypoints, tar_norm_kp, T2);
+        
+        Mat F_norm = findFundamentalMat(ref_norm_kp, tar_norm_kp, CV_FM_RANSAC, 3, 0.99);
+        F = T2.inv() * F_norm * T1;
+        
+        score = CheckFundamental(ref_keypoints, tar_keypoints, F, match_inliers, num_inliers);
+        
+        return F;
+    }
     
     // Reference: https://hal.archives-ouvertes.fr/inria-00075698/document
     bool Initializer::ReconstructHomography(PointArray &ref_keypoints, PointArray &tar_keypoints, vector<DMatch> &matches, vector<bool> &inliers, int &num_inliers, Mat &H, Mat &R, Mat &t, vector<Point3f> &points, vector<bool> &triangulated_state)
@@ -295,6 +347,8 @@ namespace vslam
         vector<bool> best_triangulated_state;
         
         float norm_triangulation_score = ScoreRt(p_R, p_t, ref_keypoints, tar_keypoints, inliers, matches, best_points, max_parallax, best_triangulated_state, best_trans_idx);
+        
+        cout << norm_triangulation_score << endl;
         
         if (norm_triangulation_score > TRIANGULATION_NORM_SCORE_H_TH && max_parallax > PARALLAX_MIN_DEGREES)
         {
@@ -772,6 +826,54 @@ namespace vslam
         return Matx31d( X(0), X(1), X(2) );
         
         
+    }
+    
+    void Initializer::Normalize(const PointArray &in_points, PointArray &norm_points, Mat &T)
+    {
+        float mean_x = 0.0f, mean_y = 0.0f;
+        float sum_x = 0.0f, sum_y = 0.0f;
+        
+        const int num_points = (int)in_points.size();
+        
+        norm_points.resize(num_points);
+        
+        for (int i=0; i<num_points; i++)
+        {
+            sum_x += in_points.at(i).x;
+            sum_y += in_points.at(i).y;
+        }
+        
+        mean_x = sum_x / num_points;
+        mean_y = sum_y / num_points;
+        
+        float mean_dev_x = 0.0f, mean_dev_y = 0.0f;
+        
+        for (int i=0; i<num_points; i++)
+        {
+            norm_points[i].x += in_points[i].x - mean_x;
+            norm_points[i].y += in_points[i].y - mean_y;
+            
+            mean_dev_x += abs(norm_points[i].x);
+            mean_dev_y += abs(norm_points[i].y);
+        }
+        
+        mean_dev_x /= num_points;
+        mean_dev_y /= num_points;
+        
+        float scale_x = 1.0 / mean_dev_x;
+        float scale_y = 1.0 / mean_dev_y;
+        
+        for (int i=0; i<num_points; i++)
+        {
+            norm_points[i].x *= scale_x;
+            norm_points[i].y *= scale_y;
+        }
+        
+        T = Mat::eye(3, 3, CV_64F);
+        T.at<double>(0,0) = scale_x;
+        T.at<double>(1,1) = scale_y;
+        T.at<double>(0,2) = -mean_x * scale_x;
+        T.at<double>(1,2) = -mean_y * scale_y;
     }
     
 }
