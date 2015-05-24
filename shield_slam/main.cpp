@@ -10,19 +10,18 @@ using namespace std;
 using namespace vslam;
 
 class VisualizerListener : public UpdateListener {
+    
 public:
-	void update(std::vector<cv::Point3d> pcld,
-				std::vector<cv::Matx34d> cameras) {
-		UpdateCloud(pcld);
+	void update(vector<MapPoint> global_map, vector<Mat> camera_rot, vector<Mat> camera_pos) {
+        vector<Point3d> init_pc;
+        for (int i=0; i<global_map.size(); i++)
+        {
+            init_pc.push_back(global_map.at(i).GetPos());
+        }
+        UpdateCloud(init_pc);
 		
-		vector<cv::Matx34d> v = cameras;
-		for(unsigned int i=0;i<v.size();i++) {
-			stringstream ss; ss << "camera" << i;
-			cv::Matx33f R;
-			R(0,0)=v[i](0,0); R(0,1)=v[i](0,1); R(0,2)=v[i](0,2);
-			R(1,0)=v[i](1,0); R(1,1)=v[i](1,1); R(1,2)=v[i](1,2);
-			R(2,0)=v[i](2,0); R(2,1)=v[i](2,1); R(2,2)=v[i](2,2);
-//			visualizerShowCamera(R,cv::Vec3f(v[i](0,3),v[i](1,3),v[i](2,3)),255,0,0,0.2,ss.str());
+		for(unsigned int i=0;i<camera_rot.size();i++) {
+            AddCamera(camera_rot.at(i), camera_pos.at(i));
 		}
 	}
 };
@@ -40,53 +39,29 @@ int main(int argc, char** argv)
     Ptr<VisualizerListener> visualizerListener = new VisualizerListener;
     InitializeVisualizer();
     
-    int frame_increments = 20;
-    
     vslam::VSlam slam = vslam::VSlam();
     
     // Initialize:
     Mat frame;
     cap >> frame;
     
-    vector<Mat> init_imgs;
-    init_imgs.resize(2);
-    init_imgs.at(0) = frame.clone();
-    
-    for ( ; ; )
-    {
-        for (int i=0; i<20; i++)
-            cap >> frame;
-        
-        
-        init_imgs.at(1) = frame.clone();
-        
-        slam.Initialize(init_imgs);
-        if (slam.getCurrState() == vslam::VSlam::TRACKING)
-            break;
-
-    }
-    
     // Load Initialized Map:
-    vector<MapPoint> global_map = slam.GetGlobalMap();
-    vector<Point3d> init_pc;
-    for (int i=0; i<global_map.size(); i++)
-    {
-        init_pc.push_back(global_map.at(i).GetPos());
-    }
-    
-    UpdateCloud(init_pc);
     RunVisualizationOnly();
     
+    slam.ProcessFrame(frame);
+    
+    for (int i=0; i<1; i++)
+    {
+        cap >> frame;
+    }
+    
     for ( ; ; )
     {
-        for (int i=0; i<frame_increments; i++)
-        {
-            cap >> frame;
-        }
-        
         cap >> frame;
         if (frame.empty())
             break;
+        
+        slam.ProcessFrame(frame);
         
 //        imshow("Input", frame);
 //        waitKey(0);
@@ -96,7 +71,9 @@ int main(int argc, char** argv)
             break;
         }
         
+        visualizerListener->update(slam.GetGlobalMap(), slam.getCameraRot(), slam.getCameraPos());
         RunVisualizationOnly();
+        waitKey(0);
     }
     
     waitKey(0);

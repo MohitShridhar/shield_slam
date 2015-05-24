@@ -2,14 +2,21 @@
 
 using namespace cv;
 using namespace std;
+using namespace Eigen;
 
-static bool update;
-static boost::mutex update_model_mutex;
+static bool update_pc = false, update_camera = false;
+static boost::mutex update_pc_model_mutex, add_camera_mutex;
+
+// Reference: Mastering Practical OpenCV
 
 boost::thread* viz_th_ = NULL;
 boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer ( new pcl::visualization::PCLVisualizer("Shield SLAM", true));
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
+
+std::deque<std::pair<std::string,pcl::PolygonMesh> > cam_meshes;
+int ipolygon[18] = {0,1,2,  0,3,1,  0,4,3,  0,2,4,  3,1,4,   2,4,1};
+int camera_count = 0;
 
 void RunVisualizationThread()
 {
@@ -34,26 +41,40 @@ void RunVisualizationOnly()
     {
         viewer->spinOnce(100);
         
-        boost::mutex::scoped_lock updateLock(update_model_mutex);
-        
-        if (update)
+        boost::mutex::scoped_lock update_pc_lock(update_pc_model_mutex);
+        if (update_pc)
         {
             if (!viewer->updatePointCloud(cloud_ptr, "cloud"))
             {
-//                viewer->removePointCloud("Initial");
                 viewer->addPointCloud(cloud_ptr, "cloud");
             }
             
-            update = false;
+            update_pc = false;
         }
-        updateLock.unlock();
+        update_pc_lock.unlock();
+        
+        boost::mutex::scoped_lock update_camera_lock(add_camera_mutex);
+        if (update_camera)
+        {
+            camera_count = 0;
+            viewer->removeAllShapes();
+            for (int i=0; i<cam_meshes.size(); i++)
+            {                
+                viewer->addPolygonMesh(cam_meshes.at(i).second, to_string(camera_count));
+                camera_count++;
+            }
+    
+            update_camera = false;
+        }
+        
+        update_camera_lock.unlock();
     }
 }
 
 void UpdateCloud(const vector<Point3d>& point_cloud)
 {
-    boost::mutex::scoped_lock updateLock(update_model_mutex);
-    update = true;
+    boost::mutex::scoped_lock updateLock(update_pc_model_mutex);
+    update_pc = true;
     
     cloud_ptr->clear();
     
@@ -63,7 +84,7 @@ void UpdateCloud(const vector<Point3d>& point_cloud)
         
         // Check for invalid points:
         if (point_cloud[i].x != point_cloud[i].x ||
-            point_cloud[i].y != point_cloud[i].y ||
+            point_cloud[i].y != point_cloud[i].y || 
             point_cloud[i].z != point_cloud[i].z ||
             isnan(point_cloud[i].x) ||
             isnan(point_cloud[i].y) ||
@@ -89,4 +110,50 @@ void UpdateCloud(const vector<Point3d>& point_cloud)
     
     updateLock.unlock();
 }
+
+inline pcl::PointXYZRGB Eigen2PointXYZRGB(Eigen::Vector3f v, Eigen::Vector3f rgb) {
+    pcl::PointXYZRGB p(rgb[0],rgb[1],rgb[2]); p.x = v[0]; p.y = v[1]; p.z = v[2];
+    return p;
+}
+
+
+void AddCamera(const Mat& R, const Mat& t)
+{
+    boost::mutex::scoped_lock updateLock(add_camera_mutex);
+    update_camera = true;
+    
+    Matrix3f r_mat;
+    r_mat << R.at<double>(0, 0), R.at<double>(0, 1), R.at<double>(0, 2),
+             R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2),
+             R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2);
+    
+    Vector3f t_vec = Vector3f(t.at<double>(0), t.at<double>(1), t.at<double>(2));
+    t_vec = -r_mat.transpose() * t_vec;
+    
+    Vector3f vec_right = r_mat.row(0).normalized() * CAMERA_POSE_SCALE;
+    Vector3f vec_up = -r_mat.row(1).normalized() * CAMERA_POSE_SCALE;
+    Vector3f vec_forward = r_mat.row(2).normalized() * CAMERA_POSE_SCALE;
+    
+    Vector3f rgb(255, 0, 0);
+    
+	pcl::PointCloud<pcl::PointXYZRGB> mesh_cld;
+	mesh_cld.push_back(Eigen2PointXYZRGB(t_vec, rgb));
+	mesh_cld.push_back(Eigen2PointXYZRGB(t_vec + vec_forward + vec_right/2.0 + vec_up/2.0,rgb));
+	mesh_cld.push_back(Eigen2PointXYZRGB(t_vec + vec_forward + vec_right/2.0 - vec_up/2.0,rgb));
+	mesh_cld.push_back(Eigen2PointXYZRGB(t_vec + vec_forward - vec_right/2.0 + vec_up/2.0,rgb));
+	mesh_cld.push_back(Eigen2PointXYZRGB(t_vec + vec_forward - vec_right/2.0 - vec_up/2.0,rgb));
+    
+	pcl::PolygonMesh pm;
+	pm.polygons.resize(6);
+	for(int i=0;i<6;i++)
+		for(int _v=0;_v<3;_v++)
+			pm.polygons[i].vertices.push_back(ipolygon[i*3 + _v]);
+    
+    pcl::toROSMsg(mesh_cld,pm.cloud);
+	cam_meshes.push_back(std::make_pair("camera" + std::to_string(camera_count),pm));
+    
+    updateLock.unlock();
+}
+
+
 

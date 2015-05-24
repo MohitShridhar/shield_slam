@@ -6,6 +6,7 @@
 #include "Initializer.hpp"
 #include "MapPoint.hpp"
 #include "Common.hpp"
+#include "KeyFrame.hpp"
 
 using namespace cv;
 using namespace std;
@@ -30,6 +31,8 @@ namespace vslam
         };
         
         State getCurrState(void) { return curr_state; }
+        vector<Mat> getCameraPos(void) { return world_camera_pos; }
+        vector<Mat> getCameraRot(void) { return world_camera_rot; }
         
         vector<MapPoint> GetGlobalMap(void) { return global_map_; }
         
@@ -41,10 +44,13 @@ namespace vslam
     
     protected:
         
+        Mat initial_frame;
+        KeyFrame curr_kf;
+        vector<Mat> world_camera_pos, world_camera_rot;
+        
         vector<MapPoint> global_map_;
         
         State curr_state, prev_state;
-        
     };
     
 }

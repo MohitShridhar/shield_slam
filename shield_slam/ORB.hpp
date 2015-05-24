@@ -31,6 +31,8 @@ namespace vslam {
         void DetectAndMatch (Mat& img_ref, Mat& img_tar, vector<DMatch>& matches,
                              PointArray& ref_matches, PointArray& tar_matches);
         
+        void ComputeDescriptors (Mat& img, Point2f& point, Mat& desc);
+        
     private:
         
         Ptr<FeatureDetector> detector;

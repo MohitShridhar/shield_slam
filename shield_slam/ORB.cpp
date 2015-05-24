@@ -83,4 +83,15 @@ namespace vslam {
         //------
     }
     
+    void ORB::ComputeDescriptors(Mat &img, Point2f &point, Mat &desc)
+    {
+        KeyPoint kp;
+        kp.pt = point;
+        
+        KeypointArray kp_array;
+        kp_array.push_back(kp);
+        
+        extractor->compute(img, kp_array, desc);
+    }
+    
 }

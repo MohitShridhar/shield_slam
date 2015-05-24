@@ -8,24 +8,15 @@ namespace vslam
     
     VSlam::VSlam()
     {
-        curr_state = NOT_INITIALIZED;
-    }
-    
-    void VSlam::Initialize(vector<cv::Mat> &init_imgs)
-    {
-        if (curr_state == NOT_INITIALIZED)
-        {
-            LoadIntrinsicParameters();
-            curr_state = INITIALIZING;
-        }
+        LoadIntrinsicParameters();
         
-        if (curr_state == INITIALIZING)
-        {
-            if(initializer.InitializeMap(init_imgs, global_map_)) // FIX ME: global should be updated
-            {
-                curr_state = TRACKING;
-            }
-        }
+        Mat init_camera_rot = Mat::eye(3, 3, CV_64F);
+        Mat init_camera_pos = Mat::zeros(3, 1, CV_64F);
+        
+        world_camera_rot.push_back(init_camera_rot);
+        world_camera_pos.push_back(init_camera_pos);
+        
+        curr_state = NOT_INITIALIZED;
     }
     
     void VSlam::LoadIntrinsicParameters()
@@ -40,6 +31,39 @@ namespace vslam
         fs["cameraMatrix"] >> camera_matrix;
         fs["distCoeffs"] >> dist_coeff;
         fs["imageSize"] >> img_size;
+    }
+    
+    void VSlam::ProcessFrame(cv::Mat &img)
+    {
+        // Convert to grayscale:
+        Mat frame;
+        cvtColor(img, frame, CV_RGB2GRAY);
+        
+        if (curr_state == NOT_INITIALIZED)
+        {
+            initial_frame = frame.clone();
+            curr_state = INITIALIZING;
+        }
+        
+        if (curr_state == INITIALIZING)
+        {
+            if(initializer.InitializeMap(initial_frame, frame, curr_kf, global_map_))
+            {
+                world_camera_rot.push_back(world_camera_rot.back() * curr_kf.getRotation());
+                world_camera_pos.push_back(world_camera_pos.back() + curr_kf.getTranslation());
+                
+                cout << world_camera_rot.at(0) << endl;
+                cout << world_camera_rot.at(1) << endl;
+                
+                curr_state = TRACKING;
+            }
+        }
+        
+        if (curr_state == TRACKING)
+        {
+            
+        }
+        
     }
     
 }

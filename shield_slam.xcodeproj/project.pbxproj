@@ -17,6 +17,7 @@
 		AF18E8091B06EC7E002ED886 /* Common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF18E8081B06EC7E002ED886 /* Common.cpp */; };
 		AF18E8101B07FE04002ED886 /* Visualizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF18E80F1B07FE04002ED886 /* Visualizer.cpp */; };
 		AF3355B41B05A644007E810F /* VSlam.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF3355B31B05A644007E810F /* VSlam.cpp */; };
+		AF820B541B11419C00872A4E /* KeyFrame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF820B531B11419C00872A4E /* KeyFrame.cpp */; };
 		AFADA48A1AF34EC400EBDC31 /* DeepBelief.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */; };
 		AFADA48B1AF34F8800EBDC31 /* DeepBelief.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */; };
 /* End PBXBuildFile section */
@@ -83,6 +84,8 @@
 		AF18E8141B07FFBF002ED886 /* Visualizer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Visualizer.hpp; path = shield_slam/Visualizer.hpp; sourceTree = "<group>"; };
 		AF3355B31B05A644007E810F /* VSlam.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VSlam.cpp; path = shield_slam/VSlam.cpp; sourceTree = "<group>"; };
 		AF3355B51B05A764007E810F /* VSlam.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = VSlam.hpp; path = shield_slam/VSlam.hpp; sourceTree = "<group>"; };
+		AF820B531B11419C00872A4E /* KeyFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = KeyFrame.cpp; path = shield_slam/KeyFrame.cpp; sourceTree = "<group>"; };
+		AF820B551B1141AA00872A4E /* KeyFrame.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = KeyFrame.hpp; path = shield_slam/KeyFrame.hpp; sourceTree = "<group>"; };
 		AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DeepBelief.framework; sourceTree = "<group>"; };
 		AFF2C6CB1B08206900A54419 /* UpdateListener.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = UpdateListener.hpp; path = shield_slam/UpdateListener.hpp; sourceTree = "<group>"; };
 		AFF2C6CC1B099DA300A54419 /* MapPoint.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = MapPoint.hpp; path = shield_slam/MapPoint.hpp; sourceTree = "<group>"; };
@@ -161,6 +164,8 @@
 				AF18E8041B06909B002ED886 /* Initializer.cpp */,
 				AF18E7A21B05B50B002ED886 /* ORB.hpp */,
 				AF18E7A01B05B4FE002ED886 /* ORB.cpp */,
+				AF820B551B1141AA00872A4E /* KeyFrame.hpp */,
+				AF820B531B11419C00872A4E /* KeyFrame.cpp */,
 				AF18E7A51B0671D2002ED886 /* Common.hpp */,
 				AF18E8081B06EC7E002ED886 /* Common.cpp */,
 				AF18E8141B07FFBF002ED886 /* Visualizer.hpp */,
@@ -366,6 +371,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF18E8051B06909B002ED886 /* Initializer.cpp in Sources */,
+				AF820B541B11419C00872A4E /* KeyFrame.cpp in Sources */,
 				AF3355B41B05A644007E810F /* VSlam.cpp in Sources */,
 				AF18E7A11B05B4FE002ED886 /* ORB.cpp in Sources */,
 				AF18E8101B07FE04002ED886 /* Visualizer.cpp in Sources */,

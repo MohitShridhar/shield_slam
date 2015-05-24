@@ -17,10 +17,14 @@ namespace vslam {
         void SetPoint(Point3f coord) { point = coord; }
         Point3f GetPos(void) { return point; }
         
+        void SetDesc(Mat& desc) { descriptor = desc.clone(); }
+        Mat GetDesc(void) { return descriptor; }
+        
     private:
         
     protected:
         Point3f point;
+        Mat descriptor;
         
     };
 }

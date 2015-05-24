@@ -8,17 +8,11 @@ namespace vslam
     
     Initializer::Initializer()
     {
-        orb_handler = new ORB(1000, false);
+        orb_handler = new ORB(500, false);
     }
     
-    bool Initializer::InitializeMap(vector<Mat> &init_imgs, vector<MapPoint> &map)
+    bool Initializer::InitializeMap(Mat &img_ref, Mat &img_tar, KeyFrame &kf, vector<MapPoint> &global_map)
     {
-        Mat img_ref, img_tar;
-        
-        // TODO: this is assuming init_imgs has only two images. Check for better initialization
-        img_ref = init_imgs.at(0);
-        img_tar = init_imgs.at(1);
-        
         // Match ORB Features:
         vector<DMatch> matches;
         PointArray ref_matches, tar_matches;
@@ -47,12 +41,14 @@ namespace vslam
         Mat P1 = Mat::eye(3, 4, CV_64F);
         Mat P2 = P1.clone();
         
-        vector<Point3f> point_cloud_3D;
-        bool success = false;
+        // Clear states:
         R = Mat();
         t = Mat();
+        point_cloud_3D.clear();
+        triangulated_state.clear();
+        bool success = false;
         
-        // Estimate camera pose based on the model chosen:
+        // Estimate camera pose based on the chosen model:
         if (RH > HOMOGRAPHY_SELECTION_THRESHOLD)
         {
             success = ReconstructHomography(undist_ref_matches, undist_tar_matches,
@@ -60,42 +56,37 @@ namespace vslam
                                             H, R, t, point_cloud_3D, triangulated_state);
         }
         else
-        
         {
             success = ReconstructFundamental(undist_ref_matches, undist_tar_matches,
                                              matches, f_inliers, f_num_inliers,
                                              F, R, t, point_cloud_3D, triangulated_state);
         }
         
-        
-        for (int i=0; i<point_cloud_3D.size(); i++)
+        if (success)
         {
-            MapPoint mp;
-            mp.SetPoint(point_cloud_3D.at(i));
-            map.push_back(mp);
+            // Load details into the current keyframe:
+            int pc_idx = 0;
+            vector<MapPoint> local_map;
+            for (int i=0; i<tar_matches.size(); i++)
+            {
+                if (triangulated_state.at(i))
+                {
+                    Mat desc;
+                    orb_handler->ComputeDescriptors(img_tar, tar_matches.at(i), desc);
+                    
+                    MapPoint mp;
+                    mp.SetPoint(point_cloud_3D.at(pc_idx));
+                    mp.SetDesc(desc);
+                    
+                    local_map.push_back(mp);
+                    global_map.push_back(mp);
+                    
+                    pc_idx++;
+                }
+            }
+            
+            kf = KeyFrame(R, t, local_map);
         }
-        
-        /*
-        // Triangulate points in the scene:
-        Mat point_cloud_4D;
-        triangulatePoints(P1, P2, ref_inliers, tar_inliers, point_cloud_4D);
-        
-        // Save points to global map:
-        for (int i=0; i<point_cloud_4D.cols; i++)
-        {
-            MapPoint map_point;
-            Point3f point_3d;
-            
-            point_3d.x = (point_cloud_4D.at<float>(0, i) / point_cloud_4D.at<float>(3, i)) / img_size.at<float>(0);
-            point_3d.y = (point_cloud_4D.at<float>(1, i) / point_cloud_4D.at<float>(3, i)) / img_size.at<float>(1);
-            point_3d.z = (point_cloud_4D.at<float>(2, i) / point_cloud_4D.at<float>(3, i));
-            
-            cout << point_3d.x << " " << point_3d.y << " " << point_3d.z << endl;
-            
-            map_point.SetPoint(point_3d);
-            map.push_back(map_point);
-        }
-        */
         
         return success;
     }
@@ -237,7 +228,7 @@ namespace vslam
             scale_prime.at<double>(2) = x3[i];
             
             Mat scale_mat = V * scale_prime;
-            if (scale_mat.at<float>(2) < 0)
+            if (scale_mat.at<double>(2) < 0)
                 scale_mat = -scale_mat;
             p_n.push_back(scale_mat);
         }
@@ -291,7 +282,7 @@ namespace vslam
             scale_prime.at<double>(2) = x3[i];
             
             Mat scale_mat = V * scale_prime;
-            if (scale_mat.at<float>(2) < 0)
+            if (scale_mat.at<double>(2) < 0)
                 scale_mat = -scale_mat;
             p_n.push_back(scale_mat);
         }
@@ -299,15 +290,19 @@ namespace vslam
         // Triangulate 3D points for all the 8 possible solutions and find the best R|t:
         int best_trans_idx;
         float max_parallax;
-        vector<Point3f> best_points;
         
-        float norm_triangulation_score = ScoreRt(p_R, p_t, ref_keypoints, tar_keypoints, inliers, matches, best_points, max_parallax, best_trans_idx);
+        vector<Point3f> best_points;
+        vector<bool> best_triangulated_state;
+        
+        float norm_triangulation_score = ScoreRt(p_R, p_t, ref_keypoints, tar_keypoints, inliers, matches, best_points, max_parallax, best_triangulated_state, best_trans_idx);
         
         if (norm_triangulation_score > TRIANGULATION_NORM_SCORE_H_TH && max_parallax > PARALLAX_MIN_DEGREES)
         {
             p_R.at(best_trans_idx).copyTo(R);
             p_t.at(best_trans_idx).copyTo(t);
+            
             points = best_points;
+            triangulated_state = best_triangulated_state;
             
             return true;
         }
@@ -359,15 +354,19 @@ namespace vslam
         // Triangulate 3D points for all the 8 possible solutions and find the best R|t:
         int best_trans_idx;
         float max_parallax;
-        vector<Point3f> best_points;
         
-        float norm_triangulation_score = ScoreRt(p_R, p_t, ref_keypoints, tar_keypoints, inliers, matches, best_points, max_parallax, best_trans_idx);
+        vector<Point3f> best_points;
+        vector<bool> best_triangulated_state;
+        
+        float norm_triangulation_score = ScoreRt(p_R, p_t, ref_keypoints, tar_keypoints, inliers, matches, best_points, max_parallax, best_triangulated_state, best_trans_idx);
         
         if (norm_triangulation_score > TRIANGULATION_NORM_SCORE_F_TH && max_parallax > PARALLAX_MIN_DEGREES)
         {
             p_R.at(best_trans_idx).copyTo(R);
             p_t.at(best_trans_idx).copyTo(t);
+            
             points = best_points;
+            triangulated_state = best_triangulated_state;
             
             return true;
         }
@@ -375,7 +374,7 @@ namespace vslam
         return false;
     }
     
-    float Initializer::ScoreRt(vector<Mat> &p_R, vector<Mat> &p_t, const PointArray &ref_keypoints, const PointArray &tar_keypoints, const vector<bool> &inliers, const vector<DMatch> &matches, vector<Point3f> &best_point_cloud, float& best_parallax, int &best_trans_idx)
+    float Initializer::ScoreRt(vector<Mat> &p_R, vector<Mat> &p_t, const PointArray &ref_keypoints, const PointArray &tar_keypoints, const vector<bool> &inliers, const vector<DMatch> &matches, vector<Point3f> &best_point_cloud, float& best_parallax, vector<bool> &best_triangulated_state, int &best_trans_idx)
     {
         // Assuming p_R elements directly correspond to p_t elemetns
         assert(p_R.size() == p_t.size());
@@ -390,8 +389,9 @@ namespace vslam
         {
             float parallax;
             vector<Point3f> point_cloud;
+            vector<bool> triangulated_state;
             
-            int num_good_points = CheckRt(p_R[i], p_t[i], ref_keypoints, tar_keypoints, inliers, matches, point_cloud, parallax);
+            int num_good_points = CheckRt(p_R[i], p_t[i], ref_keypoints, tar_keypoints, inliers, matches, point_cloud, parallax, triangulated_state);
             sum_good_points += num_good_points;
             
             if (num_good_points > highest_good_points)
@@ -401,6 +401,7 @@ namespace vslam
                 best_parallax = parallax;
                 best_trans_idx = i;
                 best_point_cloud = point_cloud;
+                best_triangulated_state = triangulated_state;
             }
         }
         
@@ -410,7 +411,7 @@ namespace vslam
         return (1.0f * highest_good_points) / sum_good_points;
     }
     
-    int Initializer::CheckRt(Mat &R, Mat &t, const PointArray &ref_keypoints, const PointArray &tar_keypoints, const vector<bool> &inliers, const vector<DMatch> &matches, vector<Point3f> &point_cloud, float& max_parallax)
+    int Initializer::CheckRt(Mat &R, Mat &t, const PointArray &ref_keypoints, const PointArray &tar_keypoints, const vector<bool> &inliers, const vector<DMatch> &matches, vector<Point3f> &point_cloud, float& max_parallax, vector<bool> &triangulated_state)
     {
         // Intrinsic parameters (3D->2D) for projection error checking:
         float cam_fx = camera_matrix.at<double>(0, 0);
@@ -418,8 +419,10 @@ namespace vslam
         float cam_cx = camera_matrix.at<double>(0, 2);
         float cam_cy = camera_matrix.at<double>(1, 2);
         
-        point_cloud.clear();
         vector<float> cos_parallaxes;
+        triangulated_state = vector<bool>(ref_keypoints.size(), false);
+        
+        point_cloud.clear();
         cos_parallaxes.reserve(ref_keypoints.size());
         
         // P1 = K[I|0]
@@ -435,11 +438,6 @@ namespace vslam
                                         R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2), t.at<double>(2));
         P2 = camera_matrix * P2;
         
-        
-        // REMVOE:
-//        Mat ref_imm;
-//        triangulatePoints(P1, P2, ref_keypoints, tar_keypoints, ref_imm);
-        
         int num_good_points = 0;
         for (int i=0; i<ref_keypoints.size(); i++)
         {
@@ -452,11 +450,6 @@ namespace vslam
             
             Mat ref_point_3D = Mat(3, 1, CV_64F, Scalar(0));
             Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
-            
-            
-//            ref_point_3D.at<double>(0) = ref_imm.at<float>(0, i) / ref_imm.at<float>(3, i);
-//            ref_point_3D.at<double>(1) = ref_imm.at<float>(1, i) / ref_imm.at<float>(3, i);
-//            ref_point_3D.at<double>(2) = ref_imm.at<float>(2, i) / ref_imm.at<float>(3, i);
             
             // Check that the point is finite:
             if (!isfinite(ref_point_3D.at<double>(0)) ||
@@ -516,8 +509,11 @@ namespace vslam
             }
             
             cos_parallaxes.push_back(cos_parallax);
-            point_cloud.push_back(Point3f(tar_point_3D.at<double>(0), tar_point_3D.at<double>(1), tar_point_3D.at<double>(2) * 1000));
+            point_cloud.push_back(Point3f(tar_point_3D.at<double>(0), tar_point_3D.at<double>(1), tar_point_3D.at<double>(2)));
+            
             num_good_points++;
+            if (cos_parallax < 0.9998)
+                triangulated_state[i] = true;
         }
         
         // Find the max parallax (in degrees) of the first N=TRIANGULATION_MIN_POINTS points
