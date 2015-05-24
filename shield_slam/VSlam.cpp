@@ -49,12 +49,7 @@ namespace vslam
         {
             if(initializer.InitializeMap(initial_frame, frame, curr_kf, global_map_))
             {
-                world_camera_rot.push_back(world_camera_rot.back() * curr_kf.getRotation());
-                world_camera_pos.push_back(world_camera_pos.back() + curr_kf.getTranslation());
-                
-                cout << world_camera_rot.at(0) << endl;
-                cout << world_camera_rot.at(1) << endl;
-                
+                AppendCameraPose(curr_kf.getRotation(), curr_kf.getTranslation());
                 curr_state = TRACKING;
             }
         }
@@ -66,4 +61,9 @@ namespace vslam
         
     }
     
+    void VSlam::AppendCameraPose(Mat rot, Mat pos)
+    {
+        world_camera_rot.push_back(world_camera_rot.back() * rot);
+        world_camera_pos.push_back(world_camera_pos.back() + pos);
+    }
 }
