@@ -30,9 +30,9 @@ namespace vslam
             TRACKING = 2,
         };
         
-        State getCurrState(void) { return curr_state; }
-        vector<Mat> getCameraPos(void) { return world_camera_pos; }
-        vector<Mat> getCameraRot(void) { return world_camera_rot; }
+        State GetCurrState(void) { return curr_state; }
+        vector<Mat> GetCameraPose(void) { return world_camera_pos; }
+        vector<Mat> GetCameraRot(void) { return world_camera_rot; }
         
         vector<MapPoint> GetGlobalMap(void) { return global_map_; }
         

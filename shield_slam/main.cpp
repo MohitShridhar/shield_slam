@@ -71,7 +71,7 @@ int main(int argc, char** argv)
             break;
         }
         
-        visualizerListener->update(slam.GetGlobalMap(), slam.getCameraRot(), slam.getCameraPos());
+        visualizerListener->update(slam.GetGlobalMap(), slam.GetCameraRot(), slam.GetCameraPose());
         RunVisualizationOnly();
         waitKey(0);
     }

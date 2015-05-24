@@ -20,8 +20,10 @@ namespace vslam {
         KeyFrame(Mat& rot_mat, Mat& trans_mat, vector<MapPoint>& map);
         virtual ~KeyFrame() = default;
         
-        Mat getRotation(void) { return R; }
-        Mat getTranslation(void) { return t; }
+        Mat GetRotation(void) { return R; }
+        Mat GetTranslation(void) { return t; }
+        Mat GetDescriptors(void);
+        vector<Point3f> Get3DPoints(void);
         
     private:
         

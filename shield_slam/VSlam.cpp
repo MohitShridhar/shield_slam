@@ -33,7 +33,7 @@ namespace vslam
         {
             if(initializer.InitializeMap(initial_frame, frame, curr_kf, global_map_))
             {
-                AppendCameraPose(curr_kf.getRotation(), curr_kf.getTranslation());
+                AppendCameraPose(curr_kf.GetRotation(), curr_kf.GetTranslation());
                 curr_state = TRACKING;
             }
         }

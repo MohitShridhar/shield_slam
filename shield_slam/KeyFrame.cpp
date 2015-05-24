@@ -43,5 +43,28 @@ namespace vslam {
         
         local_map = map;
     }
+    
+    vector<Point3f> KeyFrame::Get3DPoints(void)
+    {
+        vector<Point3f> point_3D;
+        for (int i=0; i<local_map.size(); i++)
+        {
+            point_3D.push_back(local_map.at(0).GetPos());
+        }
+        
+        return point_3D;
+    }
+    
+    Mat KeyFrame::GetDescriptors(void)
+    {
+        Mat desc = Mat::zeros((int)local_map.size(), local_map.at(0).GetDesc().cols, CV_64F);
+        
+        for (int i=0; i<local_map.size(); i++)
+        {
+            desc.row(i) = local_map.at(i).GetDesc();
+        }
+        
+        return desc;
+    }
 
 }
