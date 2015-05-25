@@ -16,7 +16,7 @@ public:
         vector<Point3d> init_pc;
         for (int i=0; i<global_map.size(); i++)
         {
-            init_pc.push_back(global_map.at(i).GetPos());
+            init_pc.push_back(global_map.at(i).GetPoint3D());
         }
         UpdateCloud(init_pc);
 		
@@ -61,10 +61,10 @@ int main(int argc, char** argv)
         if (frame.empty())
             break;
         
-        slam.ProcessFrame(frame);
+        imshow("Input", frame);
+        waitKey(0);
         
-//        imshow("Input", frame);
-//        waitKey(0);
+        slam.ProcessFrame(frame);
         
         if (waitKey(30) == 27)
         {

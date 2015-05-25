@@ -24,6 +24,8 @@ namespace vslam {
         Mat GetTranslation(void) { return t; }
         Mat GetDescriptors(void);
         vector<Point3f> Get3DPoints(void);
+        vector<MapPoint> GetMap(void) { return local_map; }
+        void GetKpDesc(PointArray& kp, Mat& desc);
         
     private:
         

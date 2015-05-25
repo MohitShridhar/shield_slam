@@ -7,6 +7,8 @@
 #include "MapPoint.hpp"
 #include "Common.hpp"
 #include "KeyFrame.hpp"
+#include "Tracking.hpp"
+#include "ORB.hpp"
 
 using namespace cv;
 using namespace std;
@@ -35,6 +37,8 @@ namespace vslam
         vector<Mat> GetCameraRot(void) { return world_camera_rot; }
         
         vector<MapPoint> GetGlobalMap(void) { return global_map_; }
+        
+        Ptr<ORB> orb_handler;
         
     private:
         

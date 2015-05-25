@@ -1,5 +1,3 @@
-#include <opencv2/features2d/features2d.hpp>
-
 #include "KeyFrame.hpp"
 
 using namespace cv;
@@ -15,6 +13,7 @@ namespace vslam {
         local_map.clear();
     }
     
+    /* Depreciated */
     KeyFrame::KeyFrame(Mat &rot_mat, Mat &trans_mat, vector<Point3f> &points, vector<Mat> &descriptors)
     {
         R = rot_mat.clone();
@@ -28,7 +27,7 @@ namespace vslam {
         for (int i=0; i<points.size(); i++)
         {
             MapPoint mp;
-            mp.SetPoint(points.at(i));
+            mp.SetPoint3D(points.at(i));
             mp.SetDesc(descriptors.at(i));
             
             local_map.push_back(mp);
@@ -49,7 +48,7 @@ namespace vslam {
         vector<Point3f> point_3D;
         for (int i=0; i<local_map.size(); i++)
         {
-            point_3D.push_back(local_map.at(0).GetPos());
+            point_3D.push_back(local_map.at(i).GetPoint3D());
         }
         
         return point_3D;
@@ -57,14 +56,25 @@ namespace vslam {
     
     Mat KeyFrame::GetDescriptors(void)
     {
-        Mat desc = Mat::zeros((int)local_map.size(), local_map.at(0).GetDesc().cols, CV_64F);
+        Mat desc = Mat::zeros((int)local_map.size(), local_map.at(0).GetDesc().cols, CV_8U);
         
         for (int i=0; i<local_map.size(); i++)
         {
-            desc.row(i) = local_map.at(i).GetDesc();
+            local_map.at(i).GetDesc().copyTo(desc.row(i));
         }
         
         return desc;
     }
-
+    
+    void KeyFrame::GetKpDesc(PointArray &kp, Mat &desc)
+    {
+        desc = Mat::zeros((int)local_map.size(), local_map.at(0).GetDesc().cols, CV_8U);
+        kp.clear();
+        
+        for (int i=0; i<local_map.size(); i++)
+        {            
+            kp.push_back(local_map.at(i).GetPoint2D());
+            local_map.at(i).GetDesc().copyTo(desc.row(i));
+        }
+    }
 }

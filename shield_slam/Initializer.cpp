@@ -8,21 +8,24 @@ namespace vslam
     
     Initializer::Initializer()
     {
-        orb_handler = new ORB(500, false);
+
     }
     
-    bool Initializer::InitializeMap(Mat &img_ref, Mat &img_tar, KeyFrame &kf, vector<MapPoint> &global_map)
+    bool Initializer::InitializeMap(Ptr<ORB> orb_handler, Mat &img_ref, Mat &img_tar, KeyFrame &kf, vector<MapPoint> &global_map)
     {
         // Match ORB Features:
+        Mat matched_tar_desc;
         vector<DMatch> matches;
         PointArray ref_matches, tar_matches;
-        orb_handler->DetectAndMatch(img_ref, img_tar, matches, ref_matches, tar_matches);
+        orb_handler->DetectAndMatch(img_ref, img_tar, matches, ref_matches, tar_matches, matched_tar_desc);
         
         
         // Undistort key points using camera intrinsics:
         PointArray undist_ref_matches, undist_tar_matches;
-//        undistort(ref_matches, undist_ref_matches, camera_matrix, dist_coeff);
-//        undistort(tar_matches, undist_tar_matches, camera_matrix, dist_coeff);
+        /*
+        undistort(ref_matches, undist_ref_matches, camera_matrix, dist_coeff);
+        undistort(tar_matches, undist_tar_matches, camera_matrix, dist_coeff);
+        */
         undist_ref_matches = ref_matches;
         undist_tar_matches = tar_matches;
         
@@ -76,18 +79,18 @@ namespace vslam
         
         if (success)
         {
-            // Load details into the current keyframe:
+            // (REFACTOR) Load details into the current keyframe:
             int pc_idx = 0;
             vector<MapPoint> local_map;
             for (int i=0; i<tar_matches.size(); i++)
             {
                 if (triangulated_state.at(i))
                 {
-                    Mat desc;
-                    orb_handler->ComputeDescriptors(img_tar, tar_matches.at(i), desc);
+                    Mat desc = matched_tar_desc.row(i);
                     
                     MapPoint mp;
-                    mp.SetPoint(point_cloud_3D.at(pc_idx));
+                    mp.SetPoint3D(point_cloud_3D.at(pc_idx));
+                    mp.SetPoint2D(tar_matches.at(i));
                     mp.SetDesc(desc);
                     
                     local_map.push_back(mp);
@@ -503,7 +506,7 @@ namespace vslam
             tar_kp.pt = tar_keypoints[i];
             
             Mat ref_point_3D = Mat(3, 1, CV_64F, Scalar(0));
-            Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
+            Tracking::Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
             
             // Check that the point is finite:
             if (!isfinite(ref_point_3D.at<double>(0)) ||
@@ -750,82 +753,6 @@ namespace vslam
         }
         
         return score;
-    }
-    
-    void Initializer::Triangulate(const KeyPoint &ref_keypoint, const KeyPoint &tar_keypoint, const Mat &P1, const Mat &P2, Mat &point_3D)
-    {
-        Point3d ref_point (ref_keypoint.pt.x, ref_keypoint.pt.y, 1.0);
-        Point3d tar_point (tar_keypoint.pt.x, tar_keypoint.pt.y, 1.0);
-        
-        Matx31d out_3D = IterativeLinearLSTriangulation(ref_point, tar_point, P1, P2);
-        point_3D = Mat(out_3D);
-    }
-    
-    // Reference: https://perception.inrialpes.fr/Publications/1997/HS97/HartleySturm-cviu97.pdf & Mastering Practical OpenCV
-    Mat_<double> Initializer::LinearLSTriangulation(const Point3d &u1, const Point3d &u2, const Mat &P1, const Mat &P2)
-    {
-        Matx43d A(
-                      u1.x * P1.at<double>(2,0) - P1.at<double>(0,0), u1.x * P1.at<double>(2,1) - P1.at<double>(0,1), u1.x * P1.at<double>(2,2) - P1.at<double>(0,2),
-                      u1.y * P1.at<double>(2,0) - P1.at<double>(1,0), u1.y * P1.at<double>(2,1) - P1.at<double>(1,1), u1.y * P1.at<double>(2,2) - P1.at<double>(1,2),
-                      u2.x * P2.at<double>(2,0) - P2.at<double>(0,0), u2.x * P2.at<double>(2,1) - P2.at<double>(0,1), u2.x * P2.at<double>(2,2) - P2.at<double>(0,2),
-                      u2.y * P2.at<double>(2,0) - P2.at<double>(1,0), u2.y * P2.at<double>(2,1) - P2.at<double>(1,1), u2.y * P2.at<double>(2,2) - P2.at<double>(1,2)
-                      );
-        Matx41d B(
-                      -( u1.x * P1.at<double>(2,3) - P1.at<double>(0,3) ),
-                      -( u1.y * P1.at<double>(2,3) - P1.at<double>(1,3) ),
-                      -( u2.x * P2.at<double>(2,3) - P2.at<double>(0,3) ),
-                      -( u2.y * P2.at<double>(2,3) - P2.at<double>(1,3) )
-                      );
-        
-        Mat_<double> X;
-        solve( A, B, X, DECOMP_SVD );
-        
-        return X;
-    }
-    
-    Matx31d Initializer::IterativeLinearLSTriangulation(const Point3d &u1, const Point3d &u2, const Mat &P1, const Mat &P2)
-    {
-        double wi1 = 1;
-        double wi2 = 1;
-        
-        Matx41d X;
-        
-        for ( int i = 0; i < TRIANGULATION_LS_ITERATIONS; i++ ) {
-            Mat_<double> X_ = LinearLSTriangulation( u1, u2, P1, P2 );
-            X = Matx41d( X_(0), X_(1), X_(2), 1.0 );
-
-            // Recalculate weights
-            double p2x1 = Mat_<double>( P1.row( 2 ) * Mat(X) ).at<double>(0);
-            double p2x2 = Mat_<double>( P2.row( 2 ) * Mat(X) ).at<double>(0);
-            
-            // Breaking point
-            if ( fabs( wi1 - p2x1 ) <= TRIANGULATION_LS_EPSILON && fabs( wi2 - p2x2 ) <= TRIANGULATION_LS_EPSILON )
-                break;
-            
-            wi1 = p2x1;
-            wi2 = p2x2;
-            
-            // Reweight equations and solve
-            Matx43d A(
-                          ( u1.x * P1.at<double>(2,0) - P1.at<double>(0,0) ) / wi1, ( u1.x * P1.at<double>(2,1) - P1.at<double>(0,1) ) / wi1, ( u1.x * P1.at<double>(2,2) - P1.at<double>(0,2) ) / wi1,
-                          ( u1.y * P1.at<double>(2,0) - P1.at<double>(1,0) ) / wi1, ( u1.y * P1.at<double>(2,1) - P1.at<double>(1,1) ) / wi1, ( u1.y * P1.at<double>(2,2) - P1.at<double>(1,2) ) / wi1,
-                          ( u2.x * P2.at<double>(2,0) - P2.at<double>(0,0) ) / wi2, ( u2.x * P2.at<double>(2,1) - P2.at<double>(0,1) ) / wi2, ( u2.x * P2.at<double>(2,2) - P2.at<double>(0,2) ) / wi2,
-                          ( u2.y * P2.at<double>(2,0) - P2.at<double>(1,0) ) / wi2, ( u2.y * P2.at<double>(2,1) - P2.at<double>(1,1) ) / wi2, ( u2.y * P2.at<double>(2,2) - P2.at<double>(1,2) ) / wi2
-                          );
-            Matx41d B(
-                          -( u1.x * P1.at<double>(2,3) - P1.at<double>(0,3) ) / wi1,
-                          -( u1.y * P1.at<double>(2,3) - P1.at<double>(1,3) ) / wi1,
-                          -( u2.x * P2.at<double>(2,3) - P2.at<double>(0,3) ) / wi2,
-                          -( u2.y * P2.at<double>(2,3) - P2.at<double>(1,3) ) / wi2
-                          );
-            
-            solve( A, B, X_, DECOMP_SVD );
-            X = Matx41d( X_(0), X_(1), X_(2), 1.0 );
-        }
-        
-        return Matx31d( X(0), X(1), X(2) );
-        
-        
     }
     
     void Initializer::Normalize(const PointArray &in_points, PointArray &norm_points, Mat &T)

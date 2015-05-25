@@ -30,8 +30,9 @@ void WaitForVisualizationThread()
 
 void InitializeVisualizer()
 {
-    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "cloud");
     viewer->addCoordinateSystem (1);
+    viewer->setRepresentationToWireframeForAllActors();
     viewer->initCameraParameters ();
 }
 
@@ -68,6 +69,8 @@ void RunVisualizationOnly()
         }
         
         update_camera_lock.unlock();
+        
+        viewer->setRepresentationToWireframeForAllActors();
     }
 }
 

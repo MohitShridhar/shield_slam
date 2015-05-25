@@ -25,9 +25,10 @@ namespace vslam {
         extractor->compute(img, img_keypoints, img_desc);
     }
     
+    
     void ORB::MatchFeatures(Mat &desc_ref, Mat &desc_tar, vector<cv::DMatch> &matches,
                             KeypointArray& ref_keypoints, KeypointArray& tar_keypoints,
-                            PointArray& ref_matches, PointArray& tar_matches,
+                            PointArray& ref_matches, PointArray& tar_matches, Mat &matched_tar_desc,
                             bool use_ratio_test)
     {
         if (desc_ref.empty() || desc_tar.empty())
@@ -43,16 +44,19 @@ namespace vslam {
         ref_matches.clear();
         tar_matches.clear();
         
+        vector<Mat> kp_desc;
         for (int i=0; i<bf_matches_.size(); i++)
         {
             if (use_ratio_test)
             {
-                if (bf_matches_[i][0].distance / bf_matches_[i][1].distance < KNN_RATIO_THRESHOLD)
+                if (bf_matches_[i][0].distance / bf_matches_[i][1].distance < KNN_RATIO_INIT_THRESHOLD)
                 {
                     matches.push_back(bf_matches_[i][0]);
                     
                     ref_matches.push_back(ref_keypoints[bf_matches_[i][0].queryIdx].pt);
                     tar_matches.push_back(tar_keypoints[bf_matches_[i][0].trainIdx].pt);
+                    
+                    kp_desc.push_back(desc_tar.row(bf_matches_[i][0].trainIdx));
                 }
             }
             else
@@ -60,10 +64,46 @@ namespace vslam {
                 matches.push_back(bf_matches_[i][0]);
             }
         }
+        
+        matched_tar_desc = Mat::zeros((int)kp_desc.size(), kp_desc.at(0).cols, CV_8U);
+        for (int i=0; i<kp_desc.size(); i++)
+        {
+            kp_desc.at(i).copyTo(matched_tar_desc.row(i));
+        }
+    }
+    
+    void ORB::MatchFeatures(Mat& desc_ref, Mat& desc_tar, vector<DMatch>& matches, bool use_ratio_test)
+    {
+        if (desc_ref.empty() || desc_tar.empty())
+        {
+            CV_Error(0, "ORB::ExtractFeatures descriptors are empty");
+        }
+        
+        // Brute-Force Matching:
+        vector<vector<DMatch> > bf_matches_;
+        matcher->knnMatch(desc_ref, desc_tar, bf_matches_, 2);
+        
+        matches.clear();
+        
+        for (int i=0; i<bf_matches_.size(); i++)
+        {
+            if (use_ratio_test)
+            {                
+                if (bf_matches_[i][0].distance / bf_matches_[i][1].distance < KNN_RATIO_TRACKING_THRESHOLD)
+                {
+                    matches.push_back(bf_matches_[i][0]);
+                }
+            }
+            else
+            {
+                matches.push_back(bf_matches_[i][0]);
+            }
+        }
+
     }
     
     void ORB::DetectAndMatch(Mat &img_ref, Mat &img_tar, vector<cv::DMatch> &matches,
-                             PointArray& ref_matches, PointArray& tar_matches)
+                             PointArray& ref_matches, PointArray& tar_matches, Mat &matched_tar_desc)
     {
         KeypointArray keypoints_ref_, keypoints_tar_;
         Mat desc_ref_, desc_tar_;
@@ -71,7 +111,7 @@ namespace vslam {
         ExtractFeatures(img_ref, keypoints_ref_, desc_ref_);
         ExtractFeatures(img_tar, keypoints_tar_, desc_tar_);
         
-        MatchFeatures(desc_ref_, desc_tar_, matches, keypoints_ref_, keypoints_tar_, ref_matches, tar_matches);
+        MatchFeatures(desc_ref_, desc_tar_, matches, keypoints_ref_, keypoints_tar_, ref_matches, tar_matches, matched_tar_desc);
         
         // Debug:
         cout << "Number of matches " << matches.size() << endl;
@@ -83,15 +123,5 @@ namespace vslam {
         //------
     }
     
-    void ORB::ComputeDescriptors(Mat &img, Point2f &point, Mat &desc)
-    {
-        KeyPoint kp;
-        kp.pt = point;
-        
-        KeypointArray kp_array;
-        kp_array.push_back(kp);
-        
-        extractor->compute(img, kp_array, desc);
-    }
     
 }

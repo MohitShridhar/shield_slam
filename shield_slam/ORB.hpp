@@ -1,3 +1,6 @@
+#ifndef __shield_slam__ORB__
+#define __shield_slam__ORB__
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
@@ -6,7 +9,8 @@
 #define GRID_CELL_ROWS 1
 #define GRID_CELL_COLS 1
 
-#define KNN_RATIO_THRESHOLD 0.7
+#define KNN_RATIO_INIT_THRESHOLD 0.7
+#define KNN_RATIO_TRACKING_THRESHOLD 1.1
 
 using namespace cv;
 using namespace std;
@@ -25,13 +29,13 @@ namespace vslam {
         
         void MatchFeatures (Mat& desc_ref, Mat& desc_tar, vector<DMatch>& matches,
                             KeypointArray& ref_keypoints, KeypointArray& tar_keypoints,
-                            PointArray& ref_matches, PointArray& tar_matches,
+                            PointArray& ref_matches, PointArray& tar_matches, Mat& matched_tar_desc,
+                            bool use_ratio_test = true);
+        void MatchFeatures (Mat& desc_ref, Mat& desc_tar, vector<DMatch>& matches,
                             bool use_ratio_test = true);
         
         void DetectAndMatch (Mat& img_ref, Mat& img_tar, vector<DMatch>& matches,
-                             PointArray& ref_matches, PointArray& tar_matches);
-        
-        void ComputeDescriptors (Mat& img, Point2f& point, Mat& desc);
+                             PointArray& ref_matches, PointArray& tar_matches, Mat& matched_tar_desc);
         
     private:
         
@@ -41,3 +45,5 @@ namespace vslam {
     
     };
 }
+
+#endif /* defined(__shield_slam__ORB__) */

@@ -15,6 +15,8 @@ namespace vslam
         world_camera_rot.push_back(init_camera_rot);
         world_camera_pos.push_back(init_camera_pos);
         
+        orb_handler = new ORB(500, true);
+        
         curr_state = NOT_INITIALIZED;
     }
     
@@ -31,7 +33,7 @@ namespace vslam
         
         if (curr_state == INITIALIZING)
         {
-            if(initializer.InitializeMap(initial_frame, frame, curr_kf, global_map_))
+            if(initializer.InitializeMap(orb_handler, initial_frame, frame, curr_kf, global_map_))
             {
                 AppendCameraPose(curr_kf.GetRotation(), curr_kf.GetTranslation());
                 curr_state = TRACKING;
@@ -40,7 +42,13 @@ namespace vslam
         
         if (curr_state == TRACKING)
         {
+            Mat R_vec = world_camera_rot.back().clone();
+            Mat t_vec = world_camera_pos.back().clone();
             
+            Tracking::PosePnP(orb_handler, frame, curr_kf, R_vec, t_vec);
+            
+            // TODO: check if lost
+            AppendCameraPose(R_vec, t_vec);
         }
     }
     
