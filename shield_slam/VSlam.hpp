@@ -37,8 +37,6 @@ namespace vslam
         vector<Mat> GetCameraRot(void) { return world_camera_rot; }
         vector<MapPoint> GetGlobalMap(void) { return global_map_; }
         
-        bool NeedsNewKeyFrame(void);
-        
         Ptr<ORB> orb_handler;
         
     private:

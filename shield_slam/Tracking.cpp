@@ -5,7 +5,7 @@ using namespace std;
 
 namespace vslam {
     
-    void Tracking::TrackPnP(Ptr<ORB> orb_handler, const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t, bool add_new_kf)
+    void Tracking::TrackPnP(Ptr<ORB> orb_handler, const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t, bool& new_kf_added)
     {
         Mat Rvec, tvec, pnp_inliers;
         
@@ -50,16 +50,21 @@ namespace vslam {
         Rodrigues(Rvec, R);
         t = tvec;
         
-        if (add_new_kf)
+        new_kf_added = false;
+        if (NeedsNewKeyframe(kf))
         {
             // Do full feature matching:
             KeypointArray ref_kp = kf.GetTotalKeypoints();
             ref_desc = kf.GetTotalDescriptors();
             
             orb_handler->MatchFeatures(ref_desc, tar_desc, matches);
-            
-            NewKeyFrame(kf, R_prev, R, t_prev, t, ref_kp, tar_kp, ref_desc, tar_desc, matches);
+            new_kf_added = NewKeyFrame(kf, R_prev, R, t_prev, t, ref_kp, tar_kp, ref_desc, tar_desc, matches);
         }
+    }
+    
+    bool Tracking::NeedsNewKeyframe(KeyFrame& kf)
+    {
+        return false;
     }
     
     bool Tracking::NewKeyFrame(KeyFrame &kf, Mat &R1, Mat &R2, Mat &t1, Mat &t2,

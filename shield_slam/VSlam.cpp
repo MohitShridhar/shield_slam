@@ -45,28 +45,18 @@ namespace vslam
             Mat R_vec = curr_kf.GetRotation().clone();
             Mat t_vec = curr_kf.GetTranslation().clone();
             
-            bool add_new_kf = NeedsNewKeyFrame();
+            bool new_kf_added = false;
+            Tracking::TrackPnP(orb_handler, frame, curr_kf, R_vec, t_vec, new_kf_added);
             
-            if (add_new_kf)
+            if (new_kf_added)
             {
-                Tracking::TrackPnP(orb_handler, frame, curr_kf, R_vec, t_vec, true);
-                
                 vector<MapPoint> kf_map = curr_kf.GetMap();
                 global_map_.insert(global_map_.end(), kf_map.begin(), kf_map.end());
-            }
-            else
-            {
-                Tracking::TrackPnP(orb_handler, frame, curr_kf, R_vec, t_vec, false);
             }
             
             // TODO: check if lost
             AppendCameraPose(R_vec, t_vec);
         }
-    }
-
-    bool VSlam::NeedsNewKeyFrame(void)
-    {
-        return false;
     }
     
     void VSlam::AppendCameraPose(Mat rot, Mat pos)
