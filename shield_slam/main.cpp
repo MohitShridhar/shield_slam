@@ -62,7 +62,7 @@ int main(int argc, char** argv)
             break;
         
         imshow("Input", frame);
-        waitKey(0);
+//        waitKey(0);
         
         slam.ProcessFrame(frame);
         

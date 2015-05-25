@@ -35,7 +35,9 @@ namespace vslam {
                             bool use_ratio_test = true);
         
         void DetectAndMatch (Mat& img_ref, Mat& img_tar, vector<DMatch>& matches,
-                             PointArray& ref_matches, PointArray& tar_matches, Mat& matched_tar_desc);
+                             PointArray& ref_matches, PointArray& tar_matches, Mat& matched_tar_desc,
+                             KeypointArray &ref_keypoints, KeypointArray &tar_keypoints,
+                             Mat &ref_desc, Mat &tar_desc);
         
     private:
         

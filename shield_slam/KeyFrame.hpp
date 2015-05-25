@@ -17,7 +17,7 @@ namespace vslam {
     public:
         KeyFrame();
         KeyFrame(Mat& rot_mat, Mat& trans_mat, vector<Point3f>& points, vector<Mat>& descriptors);
-        KeyFrame(Mat& rot_mat, Mat& trans_mat, vector<MapPoint>& map);
+        KeyFrame(Mat& rot_mat, Mat& trans_mat, vector<MapPoint>& map, KeypointArray& total_kp, Mat& total_desc);
         virtual ~KeyFrame() = default;
         
         Mat GetRotation(void) { return R; }
@@ -26,13 +26,16 @@ namespace vslam {
         vector<Point3f> Get3DPoints(void);
         vector<MapPoint> GetMap(void) { return local_map; }
         void GetKpDesc(PointArray& kp, Mat& desc);
+        KeypointArray GetTotalKeypoints(void) { return orb_kp; }
+        Mat GetTotalDescriptors(void) { return orb_desc; }
         
     private:
         
     protected:
         Mat R, t;
         vector<MapPoint> local_map;
-        
+        KeypointArray orb_kp;
+        Mat orb_desc;
     };
 }
 

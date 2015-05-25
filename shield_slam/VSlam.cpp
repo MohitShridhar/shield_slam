@@ -42,20 +42,37 @@ namespace vslam
         
         if (curr_state == TRACKING)
         {
-            Mat R_vec = world_camera_rot.back().clone();
-            Mat t_vec = world_camera_pos.back().clone();
+            Mat R_vec = curr_kf.GetRotation().clone();
+            Mat t_vec = curr_kf.GetTranslation().clone();
             
-            Tracking::PosePnP(orb_handler, frame, curr_kf, R_vec, t_vec);
+            bool add_new_kf = NeedsNewKeyFrame();
+            
+            if (add_new_kf)
+            {
+                Tracking::TrackPnP(orb_handler, frame, curr_kf, R_vec, t_vec, true);
+                
+                vector<MapPoint> kf_map = curr_kf.GetMap();
+                global_map_.insert(global_map_.end(), kf_map.begin(), kf_map.end());
+            }
+            else
+            {
+                Tracking::TrackPnP(orb_handler, frame, curr_kf, R_vec, t_vec, false);
+            }
             
             // TODO: check if lost
             AppendCameraPose(R_vec, t_vec);
         }
     }
+
+    bool VSlam::NeedsNewKeyFrame(void)
+    {
+        return false;
+    }
     
     void VSlam::AppendCameraPose(Mat rot, Mat pos)
     {
-        world_camera_rot.push_back(world_camera_rot.back() * rot);
-        world_camera_pos.push_back(world_camera_pos.back() + pos);
+        world_camera_rot.push_back(curr_kf.GetRotation() * rot);
+        world_camera_pos.push_back(curr_kf.GetTranslation() + pos);
     }
     
     void VSlam::LoadIntrinsicParameters()

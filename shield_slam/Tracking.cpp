@@ -5,9 +5,12 @@ using namespace std;
 
 namespace vslam {
     
-    void Tracking::PosePnP(Ptr<ORB> orb_handler, const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t)
+    void Tracking::TrackPnP(Ptr<ORB> orb_handler, const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t, bool add_new_kf)
     {
         Mat Rvec, tvec, pnp_inliers;
+        
+        Mat R_prev = R.clone();
+        Mat t_prev = t.clone();
         
         Rodrigues(R, Rvec);
         tvec = t;
@@ -46,6 +49,133 @@ namespace vslam {
         
         Rodrigues(Rvec, R);
         t = tvec;
+        
+        if (add_new_kf)
+        {
+            // Do full feature matching:
+            KeypointArray ref_kp = kf.GetTotalKeypoints();
+            ref_desc = kf.GetTotalDescriptors();
+            
+            orb_handler->MatchFeatures(ref_desc, tar_desc, matches);
+            
+            NewKeyFrame(kf, R_prev, R, t_prev, t, ref_kp, tar_kp, ref_desc, tar_desc, matches);
+        }
+    }
+    
+    bool Tracking::NewKeyFrame(KeyFrame &kf, Mat &R1, Mat &R2, Mat &t1, Mat &t2,
+                               KeypointArray &kp1, KeypointArray &kp2,
+                               Mat& ref_desc, Mat& tar_desc, vector<DMatch>& matches)
+    {
+        // Intrinsic parameters (3D->2D) for projection error checking:
+        float cam_fx = camera_matrix.at<double>(0, 0);
+        float cam_fy = camera_matrix.at<double>(1, 1);
+        float cam_cx = camera_matrix.at<double>(0, 2);
+        float cam_cy = camera_matrix.at<double>(1, 2);
+        
+        // P1 = K[R1|t1]
+        Mat ref_origin = -R1.t()*t1;
+        Mat P1 = (Mat_<double>(3, 4) << R1.at<double>(0, 0), R1.at<double>(0, 1), R1.at<double>(0, 2), t1.at<double>(0),
+                                        R1.at<double>(1, 0), R1.at<double>(1, 1), R1.at<double>(1, 2), t1.at<double>(1),
+                                        R1.at<double>(2, 0), R1.at<double>(2, 1), R1.at<double>(2, 2), t1.at<double>(2));
+        P1 = camera_matrix * P1;
+        
+        // P2 = K[R2|t2]
+        Mat tar_origin = -R2.t()*t2;
+        Mat P2 = (Mat_<double>(3, 4) << R2.at<double>(0, 0), R2.at<double>(0, 1), R2.at<double>(0, 2), t2.at<double>(0),
+                                        R2.at<double>(1, 0), R2.at<double>(1, 1), R2.at<double>(1, 2), t2.at<double>(1),
+                                        R2.at<double>(2, 0), R2.at<double>(2, 1), R2.at<double>(2, 2), t2.at<double>(2));
+        P2 = camera_matrix * P2;
+        
+        vector<MapPoint> local_map;
+    
+        int num_good_points = 0;
+        for (int i=0; i<matches.size(); i++)
+        {
+            KeyPoint ref_kp = kp1[matches[i].queryIdx];
+            KeyPoint tar_kp = kp2[matches[i].trainIdx];
+            
+            Mat ref_point_3D = Mat(3, 1, CV_64F, Scalar(0));
+            Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
+            
+            // Check that the point is finite:
+            if (!isfinite(ref_point_3D.at<double>(0)) ||
+                !isfinite(ref_point_3D.at<double>(1)) ||
+                !isfinite(ref_point_3D.at<double>(2)))
+            {
+                continue;
+            }
+            
+            // Check parallax:
+            Mat ref_normal = ref_point_3D - ref_origin;
+            float ref_dist = norm(ref_normal);
+            
+            Mat tar_normal = ref_point_3D - tar_origin;
+            float tar_dist = norm(tar_normal);
+            
+            float cos_parallax = ref_normal.dot(tar_normal) / (ref_dist * tar_dist);
+            
+            // Check that the point is in front of the reference camera:
+            if (ref_point_3D.at<double>(2) <= 0.0 && cos_parallax < 0.9998)
+            {
+                continue;
+            }
+            
+            Mat tar_point_3D = R2 * ref_point_3D + t2;
+            
+            // Check that the point is in front of the target camera:
+            if (tar_point_3D.at<double>(2) <= 0.0 && cos_parallax < 0.9998)
+            {
+                continue;
+            }
+            
+            // Check reprojection error for reference image:
+            float ref_reproj_x, ref_reproj_y;
+            ref_reproj_x = cam_fx * (ref_point_3D.at<double>(0) / ref_point_3D.at<double>(2)) + cam_cx;
+            ref_reproj_y = cam_fy * (ref_point_3D.at<double>(1) / ref_point_3D.at<double>(2)) + cam_cy;
+            
+            float ref_square_error = (ref_reproj_x - ref_kp.pt.x) * (ref_reproj_x - ref_kp.pt.x) +
+            (ref_reproj_y - ref_kp.pt.y) * (ref_reproj_y - ref_kp.pt.y);
+            
+            if (ref_square_error > REPROJECTION_ERROR_TH)
+            {
+                continue;
+            }
+            
+            // Check reprojection error for target image:
+            float tar_reproj_x, tar_reproj_y;
+            tar_reproj_x = cam_fx * (tar_point_3D.at<double>(0) / tar_point_3D.at<double>(2)) + cam_cx;
+            tar_reproj_y = cam_fy * (tar_point_3D.at<double>(1) / tar_point_3D.at<double>(2)) + cam_cy;
+            
+            float tar_square_error = (tar_reproj_x - tar_kp.pt.x) * (tar_reproj_x - tar_kp.pt.x) +
+            (tar_reproj_y - tar_kp.pt.y) * (tar_reproj_y - tar_kp.pt.y);
+            
+            if (tar_square_error > REPROJECTION_ERROR_TH)
+            {
+                continue;
+            }
+            
+            // Create MapPoint:
+            Mat desc;
+            tar_desc.row(matches[i].trainIdx).copyTo(desc);
+            
+            Point3f point_3D = Point3f(tar_point_3D.at<double>(0), tar_point_3D.at<double>(1), tar_point_3D.at<double>(2));
+            
+            MapPoint mp;
+            mp.SetPoint3D(point_3D);
+            mp.SetPoint2D(tar_kp.pt);
+            mp.SetDesc(desc);
+            local_map.push_back(mp);
+            
+            num_good_points++;
+        }
+        
+        if (num_good_points >= TRIANGULATION_MIN_POINTS)
+        {
+            kf = KeyFrame(R2, t2, local_map, kp2, tar_desc);
+            return true;
+        }
+        
+        return false;
     }
     
     void Tracking::Triangulate(const KeyPoint &ref_keypoint, const KeyPoint &tar_keypoint, const Mat &P1, const Mat &P2, Mat &point_3D)

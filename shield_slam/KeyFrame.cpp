@@ -32,15 +32,16 @@ namespace vslam {
             
             local_map.push_back(mp);
         }
-        
     }
     
-    KeyFrame::KeyFrame(Mat &rot_mat, Mat &trans_mat, vector<MapPoint> &map)
+    KeyFrame::KeyFrame(Mat &rot_mat, Mat &trans_mat, vector<MapPoint> &map, KeypointArray &total_kp, Mat &total_desc)
     {
         R = rot_mat.clone();
         t = trans_mat.clone();
         
         local_map = map;
+        orb_kp = total_kp;
+        orb_desc = total_desc.clone();
     }
     
     vector<Point3f> KeyFrame::Get3DPoints(void)

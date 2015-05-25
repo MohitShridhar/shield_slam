@@ -12,6 +12,9 @@
 #define TRIANGULATION_LS_ITERATIONS 10
 #define TRIANGULATION_LS_EPSILON 0.0001
 
+#define REPROJECTION_ERROR_TH 10.0
+#define TRIANGULATION_MIN_POINTS 50
+
 using namespace cv;
 using namespace std;
 
@@ -20,7 +23,10 @@ namespace vslam {
     class Tracking
     {
     public:
-        static void PosePnP(Ptr<ORB> orb_handler, const Mat& gray_frame, KeyFrame& kf, Mat& R, Mat& t);
+        static void TrackPnP(Ptr<ORB> orb_handler, const Mat& gray_frame, KeyFrame& kf, Mat& R, Mat& t, bool add_new_kf);
+        static bool NewKeyFrame(KeyFrame &kf, Mat &R1, Mat &R2, Mat &t1, Mat &t2,
+                                KeypointArray &kp1, KeypointArray &kp2,
+                                Mat& ref_desc, Mat& tar_desc, vector<DMatch>& matches);
         
         // Triangulation Functions:
         static void Triangulate(const KeyPoint &ref_keypoint, const KeyPoint &tar_keypoint,

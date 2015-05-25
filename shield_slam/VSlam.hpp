@@ -35,8 +35,9 @@ namespace vslam
         State GetCurrState(void) { return curr_state; }
         vector<Mat> GetCameraPose(void) { return world_camera_pos; }
         vector<Mat> GetCameraRot(void) { return world_camera_rot; }
-        
         vector<MapPoint> GetGlobalMap(void) { return global_map_; }
+        
+        bool NeedsNewKeyFrame(void);
         
         Ptr<ORB> orb_handler;
         

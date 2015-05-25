@@ -17,8 +17,10 @@ namespace vslam
         Mat matched_tar_desc;
         vector<DMatch> matches;
         PointArray ref_matches, tar_matches;
-        orb_handler->DetectAndMatch(img_ref, img_tar, matches, ref_matches, tar_matches, matched_tar_desc);
+        KeypointArray ref_kp, tar_kp;
+        Mat ref_desc, tar_desc;
         
+        orb_handler->DetectAndMatch(img_ref, img_tar, matches, ref_matches, tar_matches, matched_tar_desc, ref_kp, tar_kp, ref_desc, tar_desc);
         
         // Undistort key points using camera intrinsics:
         PointArray undist_ref_matches, undist_tar_matches;
@@ -100,7 +102,7 @@ namespace vslam
                 }
             }
             
-            kf = KeyFrame(R, t, local_map);
+            kf = KeyFrame(R, t, local_map, tar_kp, tar_desc);
         }
         
         return success;

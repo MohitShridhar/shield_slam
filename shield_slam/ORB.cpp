@@ -103,20 +103,19 @@ namespace vslam {
     }
     
     void ORB::DetectAndMatch(Mat &img_ref, Mat &img_tar, vector<cv::DMatch> &matches,
-                             PointArray& ref_matches, PointArray& tar_matches, Mat &matched_tar_desc)
+                             PointArray& ref_matches, PointArray& tar_matches, Mat &matched_tar_desc,
+                             KeypointArray& ref_keypoints, KeypointArray& tar_keypoints,
+                             Mat& ref_desc, Mat& tar_desc)
     {
-        KeypointArray keypoints_ref_, keypoints_tar_;
-        Mat desc_ref_, desc_tar_;
+        ExtractFeatures(img_ref, ref_keypoints, ref_desc);
+        ExtractFeatures(img_tar, tar_keypoints, tar_desc);
         
-        ExtractFeatures(img_ref, keypoints_ref_, desc_ref_);
-        ExtractFeatures(img_tar, keypoints_tar_, desc_tar_);
-        
-        MatchFeatures(desc_ref_, desc_tar_, matches, keypoints_ref_, keypoints_tar_, ref_matches, tar_matches, matched_tar_desc);
+        MatchFeatures(ref_desc, tar_desc, matches, ref_keypoints, tar_keypoints, ref_matches, tar_matches, matched_tar_desc);
         
         // Debug:
         cout << "Number of matches " << matches.size() << endl;
         Mat debug_draw_img;
-        drawMatches(img_ref, keypoints_ref_, img_tar, keypoints_tar_, matches, debug_draw_img);
+        drawMatches(img_ref, ref_keypoints, img_tar, tar_keypoints, matches, debug_draw_img);
         
         imshow("init orb matches", debug_draw_img);
         waitKey(0);
