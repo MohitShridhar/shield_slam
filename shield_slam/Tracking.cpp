@@ -7,9 +7,11 @@ namespace vslam {
     
     void Tracking::PosePnP(Ptr<ORB> orb_handler, const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t)
     {
-        R = Mat::eye(3, 3, CV_64F);
-        t = Mat::zeros(3, 1, CV_64F);
+        Mat Rvec, tvec, pnp_inliers;
         
+        Rodrigues(R, Rvec);
+        tvec = t;
+
         // Find matches with reference to the keyframe
         Mat tar_desc;
         Mat tar_img = gray_frame;
@@ -38,11 +40,9 @@ namespace vslam {
             Point3f object_point = ref_point_cloud[matches[i].queryIdx];
             object_points.push_back(object_point);
         }
-
         
-        Mat Rvec, tvec, pnp_inliers;
         solvePnPRansac(object_points, image_points, camera_matrix, dist_coeff, Rvec, tvec,
-                       false, 100, 8.0, 100, pnp_inliers);
+                       true, 100, 8.0, 100, pnp_inliers);
         
         Rodrigues(Rvec, R);
         t = tvec;
