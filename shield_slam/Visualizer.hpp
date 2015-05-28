@@ -13,6 +13,10 @@
 
 #define CAMERA_POSE_SCALE 0.5
 
+#define X_SCALE 1.0
+#define Y_SCALE 1.0
+#define Z_SCALE 560.0
+
 using namespace cv;
 using namespace std;
 

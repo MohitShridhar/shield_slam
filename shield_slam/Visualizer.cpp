@@ -18,7 +18,7 @@ std::deque<std::pair<std::string,pcl::PolygonMesh> > cam_meshes;
 int ipolygon[18] = {0,1,2,  0,3,1,  0,4,3,  0,2,4,  3,1,4,   2,4,1};
 int camera_count = 0;
 
-bool aggregate_view_frustrums = true;
+bool aggregate_view_frustrums = false;
 
 void RunVisualizationThread()
 {
@@ -109,9 +109,9 @@ void UpdateCloud(const vector<Point3d>& point_cloud)
         
         pcl::PointXYZRGB point;
         
-        point.x = point_cloud[i].x;
-        point.y = point_cloud[i].y;
-        point.z = point_cloud[i].z * 560;
+        point.x = point_cloud[i].x * X_SCALE;
+        point.y = point_cloud[i].y * Y_SCALE;
+        point.z = point_cloud[i].z * Z_SCALE;
         
         uint32_t rgb = ((uint32_t)rgbv[2] << 16 | (uint32_t)rgbv[1] << 8 | (uint32_t)rgbv[0]);
         point.rgb = *reinterpret_cast<float*>(&rgb);
@@ -141,7 +141,7 @@ void AddCamera(const Mat& R, const Mat& t)
              R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2),
              R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2);
     
-    Vector3f t_vec = Vector3f(t.at<double>(0), t.at<double>(1), t.at<double>(2));
+    Vector3f t_vec = Vector3f(t.at<double>(0) * X_SCALE, t.at<double>(1) * Y_SCALE, t.at<double>(2) * 1.0f);
     t_vec = -r_mat.transpose() * t_vec;
     
     t_vec = Vector3f(t_vec.x(), t_vec.y(), t_vec.z());

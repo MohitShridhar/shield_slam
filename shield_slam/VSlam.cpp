@@ -16,6 +16,7 @@ namespace vslam
         world_camera_pos.push_back(init_camera_pos);
         
         orb_handler = new ORB(500, true);
+        Tracking::SetOrbHandler(orb_handler);
         
         curr_state = NOT_INITIALIZED;
     }
@@ -46,7 +47,7 @@ namespace vslam
             Mat t_vec = curr_kf.GetTranslation().clone();
             
             bool new_kf_added = false;
-            bool is_lost = !Tracking::TrackMap(orb_handler, frame, curr_kf, R_vec, t_vec, new_kf_added);
+            bool is_lost = !Tracking::TrackMap(frame, curr_kf, R_vec, t_vec, new_kf_added);
             
             if (!is_lost)
             {
