@@ -30,6 +30,7 @@ namespace vslam
             NOT_INITIALIZED = 0,
             INITIALIZING = 1,
             TRACKING = 2,
+            LOST = 3,
         };
         
         State GetCurrState(void) { return curr_state; }
@@ -44,6 +45,7 @@ namespace vslam
         Initializer initializer;
         
         void LoadIntrinsicParameters(void);
+        void CompoundCameraPose(Mat rot, Mat pos);
         void AppendCameraPose(Mat rot, Mat pos);
     
     protected:

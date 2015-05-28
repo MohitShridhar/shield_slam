@@ -9,6 +9,7 @@
 #include <boost/thread.hpp>
 
 #include <Eigen/Eigen>
+#include "Common.hpp"
 
 #define CAMERA_POSE_SCALE 0.5
 

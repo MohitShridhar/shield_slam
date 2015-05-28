@@ -29,6 +29,7 @@ public:
 int main(int argc, char** argv)
 {
     VideoCapture cap("/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/indoor.avi");
+//    VideoCapture cap("/Users/MohitSridhar/Downloads/kitti_youtube.avi");
     
     if (!cap.isOpened())
     {

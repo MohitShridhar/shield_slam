@@ -5,7 +5,7 @@ using namespace std;
 
 namespace vslam {
     
-    void Tracking::TrackPnP(Ptr<ORB> orb_handler, const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t, bool& new_kf_added)
+    bool Tracking::TrackMap(Ptr<ORB> orb_handler, const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t, bool& new_kf_added)
     {
         Mat Rvec, tvec, pnp_inliers;
         
@@ -45,25 +45,46 @@ namespace vslam {
         }
         
         solvePnPRansac(object_points, image_points, camera_matrix, dist_coeff, Rvec, tvec,
-                       true, 100, 8.0, 100, pnp_inliers);
+                       true, 50, 8.0, 100, pnp_inliers);
+        
+        cout << pnp_inliers << endl;
+        
+        // TODO: select only inliers
         
         Rodrigues(Rvec, R);
         t = tvec;
         
+        kf.IncrementFrameCount();
+        KeypointArray ref_kp = kf.GetTotalKeypoints();
+        
         new_kf_added = false;
-        if (NeedsNewKeyframe(kf))
+        if (NeedsNewKeyframe(kf, (int)ref_points.size(), (int)tar_kp.size(), (int)matches.size()))
         {
             // Do full feature matching:
-            KeypointArray ref_kp = kf.GetTotalKeypoints();
             ref_desc = kf.GetTotalDescriptors();
             
             orb_handler->MatchFeatures(ref_desc, tar_desc, matches);
             new_kf_added = NewKeyFrame(kf, R_prev, R, t_prev, t, ref_kp, tar_kp, ref_desc, tar_desc, matches);
+            
+            return new_kf_added;
         }
+        
+        return true;
     }
     
-    bool Tracking::NeedsNewKeyframe(KeyFrame& kf)
+    bool Tracking::NeedsNewKeyframe(KeyFrame& kf, int num_kf_kp, int num_tar_kp, int num_kf_matches)
     {
+        cout << num_tar_kp << " " << (1.0 * num_kf_matches) / num_kf_kp << " " << kf.GetFrameCountSinceInsertion() << endl;
+        
+        if (num_tar_kp < KEYFRAME_MIN_KEYPOINTS)
+            return true;
+        
+        if ((1.0 * num_kf_matches) / num_kf_kp < KEYFRAME_MIN_MATCH_RATIO)
+            return true;
+        
+        if (kf.GetFrameCountSinceInsertion() > KEYFRAME_MAX_FRAME_COUNT_SINCE_INSERTION)
+            return true;
+        
         return false;
     }
     
@@ -102,6 +123,7 @@ namespace vslam {
             Mat ref_point_3D = Mat(3, 1, CV_64F, Scalar(0));
             Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
             
+            
             // Check that the point is finite:
             if (!isfinite(ref_point_3D.at<double>(0)) ||
                 !isfinite(ref_point_3D.at<double>(1)) ||
@@ -125,7 +147,9 @@ namespace vslam {
                 continue;
             }
             
+            
             Mat tar_point_3D = R2 * ref_point_3D + t2;
+            
             
             // Check that the point is in front of the target camera:
             if (tar_point_3D.at<double>(2) <= 0.0 && cos_parallax < 0.9998)
@@ -159,6 +183,7 @@ namespace vslam {
                 continue;
             }
             
+            
             // Create MapPoint:
             Mat desc;
             tar_desc.row(matches[i].trainIdx).copyTo(desc);
@@ -176,7 +201,10 @@ namespace vslam {
         
         if (num_good_points >= TRIANGULATION_MIN_POINTS)
         {
-            kf = KeyFrame(R2, t2, local_map, kp2, tar_desc);
+            Mat new_R = R1 * R2;
+            Mat new_t = t1 + t2;
+            
+            kf = KeyFrame(new_R, new_t, local_map, kp2, tar_desc);
             return true;
         }
         
@@ -185,6 +213,20 @@ namespace vslam {
     
     void Tracking::Triangulate(const KeyPoint &ref_keypoint, const KeyPoint &tar_keypoint, const Mat &P1, const Mat &P2, Mat &point_3D)
     {
+        /*
+        cv::Mat A(4,4,CV_64F);
+        
+        A.row(0) = ref_keypoint.pt.x*P1.row(2)-P1.row(0);
+        A.row(1) = ref_keypoint.pt.y*P1.row(2)-P1.row(1);
+        A.row(2) = tar_keypoint.pt.x*P2.row(2)-P2.row(0);
+        A.row(3) = tar_keypoint.pt.y*P2.row(2)-P2.row(1);
+        
+        cv::Mat u,w,vt;
+        cv::SVD::compute(A,w,u,vt,cv::SVD::MODIFY_A| cv::SVD::FULL_UV);
+        point_3D = vt.row(3).t();
+        point_3D = point_3D.rowRange(0,3) / point_3D.at<float>(3);
+        */
+        
         Point3d ref_point (ref_keypoint.pt.x, ref_keypoint.pt.y, 1.0);
         Point3d tar_point (tar_keypoint.pt.x, tar_keypoint.pt.y, 1.0);
         

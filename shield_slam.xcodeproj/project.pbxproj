@@ -21,6 +21,7 @@
 		AF820B571B12955C00872A4E /* Tracking.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF820B561B12955C00872A4E /* Tracking.cpp */; };
 		AFADA48A1AF34EC400EBDC31 /* DeepBelief.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */; };
 		AFADA48B1AF34F8800EBDC31 /* DeepBelief.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */; };
+		AFD59D221B143A0600F38E71 /* Optimizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFD59D211B143A0600F38E71 /* Optimizer.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,6 +91,8 @@
 		AF820B561B12955C00872A4E /* Tracking.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Tracking.cpp; path = shield_slam/Tracking.cpp; sourceTree = "<group>"; };
 		AF820B581B12956700872A4E /* Tracking.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Tracking.hpp; path = shield_slam/Tracking.hpp; sourceTree = "<group>"; };
 		AFADA4881AF34E5900EBDC31 /* DeepBelief.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DeepBelief.framework; sourceTree = "<group>"; };
+		AFD59D211B143A0600F38E71 /* Optimizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Optimizer.cpp; path = shield_slam/Optimizer.cpp; sourceTree = "<group>"; };
+		AFD59D231B143A1700F38E71 /* Optimizer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Optimizer.hpp; path = shield_slam/Optimizer.hpp; sourceTree = "<group>"; };
 		AFF2C6CB1B08206900A54419 /* UpdateListener.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = UpdateListener.hpp; path = shield_slam/UpdateListener.hpp; sourceTree = "<group>"; };
 		AFF2C6CC1B099DA300A54419 /* MapPoint.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = MapPoint.hpp; path = shield_slam/MapPoint.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -173,6 +176,8 @@
 				AF820B561B12955C00872A4E /* Tracking.cpp */,
 				AF18E7A51B0671D2002ED886 /* Common.hpp */,
 				AF18E8081B06EC7E002ED886 /* Common.cpp */,
+				AFD59D231B143A1700F38E71 /* Optimizer.hpp */,
+				AFD59D211B143A0600F38E71 /* Optimizer.cpp */,
 				AFF2C6CC1B099DA300A54419 /* MapPoint.hpp */,
 				AF18E8141B07FFBF002ED886 /* Visualizer.hpp */,
 				AF18E80F1B07FE04002ED886 /* Visualizer.cpp */,
@@ -383,6 +388,7 @@
 				AF18E8101B07FE04002ED886 /* Visualizer.cpp in Sources */,
 				AF18E8091B06EC7E002ED886 /* Common.cpp in Sources */,
 				AF18E7A41B066B3C002ED886 /* main.cpp in Sources */,
+				AFD59D221B143A0600F38E71 /* Optimizer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -612,6 +618,7 @@
 					"/usr/local/include/pcl-1.8",
 					"/usr/local/opt/vtk5/include/vtk-5.10",
 					/usr/local/include/eigen3,
+					/usr/local/include/g2o,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"/usr/local/opt/vtk5/lib/vtk-5.10",
@@ -659,6 +666,31 @@
 					"-lvtkGraphics.5.10",
 					"-lvtkCommon.5.10",
 					"-lvtkFiltering.5.10",
+					"-lg2o_cli",
+					"-lg2o_core",
+					"-lg2o_csparse_extension",
+					"-lg2o_ext_csparse",
+					"-lg2o_ext_freeglut_minimal",
+					"-lg2o_interface",
+					"-lg2o_opengl_helper",
+					"-lg2o_parser",
+					"-lg2o_simulator",
+					"-lg2o_solver_csparse",
+					"-lg2o_solver_dense",
+					"-lg2o_solver_eigen",
+					"-lg2o_solver_pcg",
+					"-lg2o_solver_slam2d_linear",
+					"-lg2o_solver_structure_only",
+					"-lg2o_stuff",
+					"-lg2o_types_data",
+					"-lg2o_types_icp",
+					"-lg2o_types_sba",
+					"-lg2o_types_sclam2d",
+					"-lg2o_types_sim3",
+					"-lg2o_types_slam2d",
+					"-lg2o_types_slam2d_addons",
+					"-lg2o_types_slam3d",
+					"-lg2o_types_slam3d_addons",
 				);
 				PRODUCT_NAME = shield_slam;
 			};
@@ -678,6 +710,7 @@
 					"/usr/local/include/pcl-1.8",
 					"/usr/local/opt/vtk5/include/vtk-5.10",
 					/usr/local/include/eigen3,
+					/usr/local/include/g2o,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"/usr/local/opt/vtk5/lib/vtk-5.10",
@@ -725,6 +758,31 @@
 					"-lvtkGraphics.5.10",
 					"-lvtkCommon.5.10",
 					"-lvtkFiltering.5.10",
+					"-lg2o_cli",
+					"-lg2o_core",
+					"-lg2o_csparse_extension",
+					"-lg2o_ext_csparse",
+					"-lg2o_ext_freeglut_minimal",
+					"-lg2o_interface",
+					"-lg2o_opengl_helper",
+					"-lg2o_parser",
+					"-lg2o_simulator",
+					"-lg2o_solver_csparse",
+					"-lg2o_solver_dense",
+					"-lg2o_solver_eigen",
+					"-lg2o_solver_pcg",
+					"-lg2o_solver_slam2d_linear",
+					"-lg2o_solver_structure_only",
+					"-lg2o_stuff",
+					"-lg2o_types_data",
+					"-lg2o_types_icp",
+					"-lg2o_types_sba",
+					"-lg2o_types_sclam2d",
+					"-lg2o_types_sim3",
+					"-lg2o_types_slam2d",
+					"-lg2o_types_slam2d_addons",
+					"-lg2o_types_slam3d",
+					"-lg2o_types_slam3d_addons",
 				);
 				PRODUCT_NAME = shield_slam;
 			};

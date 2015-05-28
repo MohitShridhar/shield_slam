@@ -24,13 +24,14 @@ namespace vslam
         
         // Undistort key points using camera intrinsics:
         PointArray undist_ref_matches, undist_tar_matches;
-        /*
+        
         undistort(ref_matches, undist_ref_matches, camera_matrix, dist_coeff);
         undistort(tar_matches, undist_tar_matches, camera_matrix, dist_coeff);
-        */
+        
+        /*
         undist_ref_matches = ref_matches;
         undist_tar_matches = tar_matches;
-        
+        */
         
         // Compute homography and fundamental matrices:
         Mat H = findHomography(undist_ref_matches, undist_tar_matches, CV_RANSAC, 3);
@@ -103,6 +104,29 @@ namespace vslam
             }
             
             kf = KeyFrame(R, t, local_map, tar_kp, tar_desc);
+            
+            // Scale Translation mat
+            /*
+            float inv_median_depth = 1.0 / kf.ComputeMedianDepth();
+            
+            Mat scaled_t = inv_median_depth * t;
+            kf.SetTranslation(scaled_t);
+            
+            // Scaled map points
+            vector<MapPoint> scaled_local_map;
+            for (int i=0; i<local_map.size(); i++)
+            {
+                MapPoint mp = local_map.at(i);
+                
+                Point3f point_3D = mp.GetPoint3D() * inv_median_depth;
+                point_3D.z *= 1000;
+                
+                mp.SetPoint3D(point_3D);
+                scaled_local_map.push_back(mp);
+            }
+            kf.SetLocalMap(scaled_local_map);
+             
+             */
         }
         
         return success;
@@ -554,7 +578,7 @@ namespace vslam
                 continue;
             }
             
-            // Check reprojection error for target image:
+            // Check reprojection error for target image:b
             float tar_reproj_x, tar_reproj_y;
             tar_reproj_x = cam_fx * (tar_point_3D.at<double>(0) / tar_point_3D.at<double>(2)) + cam_cx;
             tar_reproj_y = cam_fy * (tar_point_3D.at<double>(1) / tar_point_3D.at<double>(2)) + cam_cy;

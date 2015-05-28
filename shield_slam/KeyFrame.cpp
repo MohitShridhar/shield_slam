@@ -11,27 +11,10 @@ namespace vslam {
         t = Mat::zeros(3, 1, CV_64F);
         
         local_map.clear();
-    }
-    
-    /* Depreciated */
-    KeyFrame::KeyFrame(Mat &rot_mat, Mat &trans_mat, vector<Point3f> &points, vector<Mat> &descriptors)
-    {
-        R = rot_mat.clone();
-        t = trans_mat.clone();
+        orb_kp.clear();
+        orb_desc = Mat();
         
-        // Assumption: contains only triangulated point descriptors
-        assert(points.size() == descriptors.size());
-        
-        local_map.clear();
-        
-        for (int i=0; i<points.size(); i++)
-        {
-            MapPoint mp;
-            mp.SetPoint3D(points.at(i));
-            mp.SetDesc(descriptors.at(i));
-            
-            local_map.push_back(mp);
-        }
+        insertion_frame_count = 0;
     }
     
     KeyFrame::KeyFrame(Mat &rot_mat, Mat &trans_mat, vector<MapPoint> &map, KeypointArray &total_kp, Mat &total_desc)
@@ -42,6 +25,8 @@ namespace vslam {
         local_map = map;
         orb_kp = total_kp;
         orb_desc = total_desc.clone();
+        
+        insertion_frame_count = 0;
     }
     
     vector<Point3f> KeyFrame::Get3DPoints(void)
@@ -77,5 +62,29 @@ namespace vslam {
             kp.push_back(local_map.at(i).GetPoint2D());
             local_map.at(i).GetDesc().copyTo(desc.row(i));
         }
+    }
+    
+    float KeyFrame::ComputeMedianDepth(void)
+    {
+        Mat R_t = R.row(2);
+        R_t = R_t.t();
+        
+        float z_world = t.at<float>(2);
+        
+        vector<float> depths;
+        
+        for (int i=0; i<local_map.size(); i++)
+        {
+            Mat point_3D = Mat(local_map.at(i).GetPoint3D());
+            point_3D.convertTo(point_3D, CV_64F);
+            
+            float z = R_t.dot(point_3D) + z_world;
+            
+            depths.push_back(z);
+        }
+        
+        sort(depths.begin(), depths.end());
+        
+        return depths[(depths.size()-1)/2];
     }
 }

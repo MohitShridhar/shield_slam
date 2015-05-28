@@ -16,9 +16,12 @@ namespace vslam {
     {
     public:
         KeyFrame();
-        KeyFrame(Mat& rot_mat, Mat& trans_mat, vector<Point3f>& points, vector<Mat>& descriptors);
         KeyFrame(Mat& rot_mat, Mat& trans_mat, vector<MapPoint>& map, KeypointArray& total_kp, Mat& total_desc);
         virtual ~KeyFrame() = default;
+        
+        void SetRotation(Mat& rot) { R = rot.clone(); }
+        void SetTranslation(Mat& trans) { t = t.clone(); }
+        void SetLocalMap(vector<MapPoint>& map) { local_map = map; }
         
         Mat GetRotation(void) { return R; }
         Mat GetTranslation(void) { return t; }
@@ -28,6 +31,10 @@ namespace vslam {
         void GetKpDesc(PointArray& kp, Mat& desc);
         KeypointArray GetTotalKeypoints(void) { return orb_kp; }
         Mat GetTotalDescriptors(void) { return orb_desc; }
+        int GetFrameCountSinceInsertion(void) { return insertion_frame_count; }
+        
+        void IncrementFrameCount(void) { insertion_frame_count++; }
+        float ComputeMedianDepth(void);
         
     private:
         
@@ -36,6 +43,8 @@ namespace vslam {
         vector<MapPoint> local_map;
         KeypointArray orb_kp;
         Mat orb_desc;
+        
+        int insertion_frame_count;
     };
 }
 

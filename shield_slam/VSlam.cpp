@@ -35,7 +35,7 @@ namespace vslam
         {
             if(initializer.InitializeMap(orb_handler, initial_frame, frame, curr_kf, global_map_))
             {
-                AppendCameraPose(curr_kf.GetRotation(), curr_kf.GetTranslation());
+                CompoundCameraPose(curr_kf.GetRotation(), curr_kf.GetTranslation());
                 curr_state = TRACKING;
             }
         }
@@ -46,23 +46,44 @@ namespace vslam
             Mat t_vec = curr_kf.GetTranslation().clone();
             
             bool new_kf_added = false;
-            Tracking::TrackPnP(orb_handler, frame, curr_kf, R_vec, t_vec, new_kf_added);
+            bool is_lost = !Tracking::TrackMap(orb_handler, frame, curr_kf, R_vec, t_vec, new_kf_added);
             
-            if (new_kf_added)
+            if (!is_lost)
             {
+                if (new_kf_added)
+                {
+                    AppendCameraPose(curr_kf.GetRotation(), curr_kf.GetTranslation());
+                }
+                else
+                {
+                    CompoundCameraPose(R_vec, t_vec);
+                }
+                
                 vector<MapPoint> kf_map = curr_kf.GetMap();
                 global_map_.insert(global_map_.end(), kf_map.begin(), kf_map.end());
             }
-            
-            // TODO: check if lost
-            AppendCameraPose(R_vec, t_vec);
+            else
+            {
+                curr_state = LOST;
+            }
         }
+        
+        if (curr_state == LOST)
+        {
+            // TODO: handle relocalization
+        }
+    }
+    
+    void VSlam::CompoundCameraPose(Mat rot, Mat pos)
+    {
+        world_camera_rot.push_back(curr_kf.GetRotation() * rot);
+        world_camera_pos.push_back(curr_kf.GetTranslation() + pos);
     }
     
     void VSlam::AppendCameraPose(Mat rot, Mat pos)
     {
-        world_camera_rot.push_back(curr_kf.GetRotation() * rot);
-        world_camera_pos.push_back(curr_kf.GetTranslation() + pos);
+        world_camera_rot.push_back(curr_kf.GetRotation());
+        world_camera_pos.push_back(curr_kf.GetTranslation());
     }
     
     void VSlam::LoadIntrinsicParameters()
