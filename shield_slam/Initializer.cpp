@@ -592,7 +592,7 @@ namespace vslam
             }
             
             cos_parallaxes.push_back(cos_parallax);
-            point_cloud.push_back(Point3f(tar_point_3D.at<double>(0), tar_point_3D.at<double>(1), tar_point_3D.at<double>(2)));
+            point_cloud.push_back(Point3f(ref_point_3D.at<double>(0), ref_point_3D.at<double>(1), ref_point_3D.at<double>(2)));
             
             num_good_points++;
             if (cos_parallax < 0.9998)

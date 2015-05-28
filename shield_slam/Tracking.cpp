@@ -165,6 +165,8 @@ namespace vslam {
             if (ref_dist == 0.0 || tar_dist == 0.0)
                 continue;
             
+            // OLD REPROJECTION ERROR CHECKING:
+            /*
             float cos_parallax = ref_normal.dot(tar_normal) / (ref_dist * tar_dist);
             
             // Check that the point is in front of the reference camera:
@@ -173,8 +175,6 @@ namespace vslam {
                 continue;
             }
             
-            // OLD REPROJECTION ERROR CHECKING:
-            /*
             Mat tar_point_3D = R2 * ref_point_3D + t2;
             
             // Check that the point is in front of the target camera:
@@ -269,8 +269,8 @@ namespace vslam {
         
         if (num_good_points >= TRIANGULATION_MIN_POINTS)
         {
-            Mat new_R = R1 * R2;
-            Mat new_t = t1 + t2;
+            Mat new_R = R1;
+            Mat new_t = t1;
             
             kf = KeyFrame(new_R, new_t, local_map, kp2, tar_desc);
             return true;
