@@ -26,5 +26,5 @@ void RunVisualizationOnly();
 void WaitForVisualizationThread();
 void RunVisualizationThread();
 
-void UpdateCloud(const vector<Point3d>& point_cloud);
+void UpdateCloud(const vector<Point3d>& point_cloud, const int r, const int g, const int b, bool clear);
 void AddCamera(const Mat& R, const Mat& t);

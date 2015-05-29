@@ -377,8 +377,6 @@ namespace vslam
         
         float norm_triangulation_score = ScoreRt(p_R, p_t, ref_keypoints, tar_keypoints, inliers, matches, best_points, max_parallax, best_triangulated_state, best_trans_idx);
         
-        cout << norm_triangulation_score << endl;
-        
         if (norm_triangulation_score > TRIANGULATION_NORM_SCORE_H_TH && max_parallax > PARALLAX_MIN_DEGREES)
         {
             p_R.at(best_trans_idx).copyTo(R);

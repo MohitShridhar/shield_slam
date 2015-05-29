@@ -87,4 +87,18 @@ namespace vslam {
         
         return depths[(depths.size()-1)/2];
     }
+    
+    KeypointArray KeyFrame::GetTrackedKeypoints(void)
+    {
+        KeypointArray kp_array;
+        
+        for (int i=0; i<local_map.size(); i++)
+        {
+            MapPoint mp = local_map.at(i);
+            KeyPoint kp = KeyPoint(mp.GetPoint2D().x, mp.GetPoint2D().y, 1);
+            kp_array.push_back(kp);
+        }
+        
+        return kp_array;
+    }
 }

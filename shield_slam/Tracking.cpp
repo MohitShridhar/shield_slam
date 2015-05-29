@@ -131,7 +131,7 @@ namespace vslam {
                                         R2.at<double>(2, 0), R2.at<double>(2, 1), R2.at<double>(2, 2), t2.at<double>(2));
         P2 = camera_matrix * P2;
         
-        const float ratio_factor = 1.5f * ORB_SCALE_FACTOR;
+        const float ratio_factor = ORB_SCALE_FACTOR;
     
         int num_good_points = 0;
         for (int i=0; i<full_orb_matches.size(); i++)
@@ -251,11 +251,11 @@ namespace vslam {
             
             if (ratio_dist * ratio_factor < ratio_octave || ratio_dist > ratio_octave * ratio_factor)
                 continue;
-                
+            
             // Create MapPoint:
             Mat desc;
             tar_desc.row(full_orb_matches[i].trainIdx).copyTo(desc);
-            
+
             Point3f point_3D = Point3f(ref_point_3D.at<double>(0), ref_point_3D.at<double>(1), ref_point_3D.at<double>(2));
             
             MapPoint mp;
@@ -269,10 +269,7 @@ namespace vslam {
         
         if (num_good_points >= TRIANGULATION_MIN_POINTS)
         {
-            Mat new_R = R1;
-            Mat new_t = t1;
-            
-            kf = KeyFrame(new_R, new_t, local_map, kp2, tar_desc);
+            kf = KeyFrame(R2, t2, local_map, kp2, tar_desc);
             return true;
         }
         
@@ -315,6 +312,7 @@ namespace vslam {
         point_3D = vt.row(3).t();
         point_3D = point_3D.rowRange(0,3) / point_3D.at<float>(3);
         */
+        
         
         Point3d ref_point (ref_keypoint.pt.x, ref_keypoint.pt.y, 1.0);
         Point3d tar_point (tar_keypoint.pt.x, tar_keypoint.pt.y, 1.0);

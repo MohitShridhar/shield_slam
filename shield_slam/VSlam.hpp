@@ -46,7 +46,6 @@ namespace vslam
         Initializer initializer;
         
         void LoadIntrinsicParameters(void);
-        void CompoundCameraPose(Mat rot, Mat pos);
         void AppendCameraPose(Mat rot, Mat pos);
     
     protected:

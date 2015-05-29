@@ -8,5 +8,5 @@ using namespace vslam;
 class UpdateListener
 {
 public:
-	virtual void update(vector<MapPoint> global_map, vector<Mat> camera_rot, vector<Mat> camera_pos) = 0;
+	virtual void update(vector<MapPoint> global_map, vector<MapPoint> local_map, vector<Mat> camera_rot, vector<Mat> camera_pos) = 0;
 };

@@ -29,6 +29,7 @@ namespace vslam {
         vector<Point3f> Get3DPoints(void);
         vector<MapPoint> GetMap(void) { return local_map; }
         void GetKpDesc(PointArray& kp, Mat& desc);
+        KeypointArray GetTrackedKeypoints(void);
         KeypointArray GetTotalKeypoints(void) { return orb_kp; }
         Mat GetTotalDescriptors(void) { return orb_desc; }
         int GetFrameCountSinceInsertion(void) { return insertion_frame_count; }

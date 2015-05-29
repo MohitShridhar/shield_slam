@@ -85,16 +85,17 @@ void RunVisualizationOnly()
     }
 }
 
-void UpdateCloud(const vector<Point3d>& point_cloud)
+void UpdateCloud(const vector<Point3d>& point_cloud, const int r, const int g, const int b, bool clear)
 {
     boost::mutex::scoped_lock updateLock(update_pc_model_mutex);
     update_pc = true;
     
-    cloud_ptr->clear();
+    if (clear)
+        cloud_ptr->clear();
     
     for (int i=0; i<point_cloud.size(); i++)
     {
-        Vec3b rgbv(0, 255, 0);
+        Vec3b rgbv(r, g, b);
         
         // Check for invalid points:
         if (point_cloud[i].x != point_cloud[i].x ||
