@@ -24,6 +24,8 @@
 
 #define ORB_SCALE_FACTOR 1.2
 
+#include <limits>
+
 using namespace cv;
 using namespace std;
 
@@ -38,6 +40,7 @@ namespace vslam {
                                 Mat& ref_desc, Mat& tar_desc, vector<DMatch>& matches_2D_3D);
         
         static void SetOrbHandler(Ptr<ORB> handler)  { orb_handler = handler; }
+        static void SetInitScale(double scale)  { init_scale = scale; }
         
         // Triangulation Functions:
         static void Triangulate(const KeyPoint &ref_keypoint, const KeyPoint &tar_keypoint,
@@ -45,13 +48,16 @@ namespace vslam {
         static Mat_<double> LinearLSTriangulation(const Point3d &u1, const Point3d &u2, const Mat &P1, const Mat &P2);
         static Matx31d IterativeLinearLSTriangulation(const Point3d &u1, const Point3d &u2, const Mat &P1, const Mat &P2);
         
+        static double FindLinearScale(Mat& R, Mat& t, vector<Point2f>& image_points, vector<Point3f>& object_points);
+        
     private:
         static bool NeedsNewKeyframe(KeyFrame& kf, int num_kf_kp, int num_tar_kp, int num_kf_matches);
         static void FilterPnPInliers(vector<Point3f>& object_points, vector<Point2f>& image_points, Mat& inliers);
+        static void Normalize3DPoints(vector<Point3f>& input_points, vector<Point3f>& norm_points);
         
     protected:
         static Ptr<ORB> orb_handler;
-        
+        static double init_scale;
     };
 }
 

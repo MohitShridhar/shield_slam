@@ -52,12 +52,9 @@ namespace vslam
             if (!is_lost)
             {
                 AppendCameraPose(curr_kf.GetRotation(), curr_kf.GetTranslation());
-                
-                if (new_kf_added)
-                {
-                    vector<MapPoint> kf_map = curr_kf.GetMap();
-                    global_map_.insert(global_map_.end(), kf_map.begin(), kf_map.end());
-                }
+
+                vector<MapPoint> kf_map = curr_kf.GetMap();
+                global_map_.insert(global_map_.end(), kf_map.begin(), kf_map.end());
             }
             else
             {

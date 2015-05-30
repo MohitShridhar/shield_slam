@@ -33,6 +33,7 @@ namespace vslam
         undist_tar_matches = tar_matches;
         */
         
+        
         // Compute homography and fundamental matrices:
         Mat H = findHomography(undist_ref_matches, undist_tar_matches, CV_RANSAC, 3);
         Mat F = findFundamentalMat(undist_ref_matches, undist_tar_matches, CV_FM_RANSAC, 3, 0.99);
@@ -44,6 +45,7 @@ namespace vslam
         float SH = CheckHomography(undist_ref_matches, undist_tar_matches, H, h_inliers, h_num_inliers);
         float SF = CheckFundamental(undist_ref_matches, undist_tar_matches, F, f_inliers, f_num_inliers);
         
+
         /*
         float SH = 0.0f, SF = 0.0f;
         vector<bool> h_inliers, f_inliers;
@@ -83,6 +85,9 @@ namespace vslam
         if (success)
         {
             // (REFACTOR) Load details into the current keyframe:
+            vector<Point2f> points_2D;
+            vector<Point3f> points_3D;
+            
             int pc_idx = 0;
             vector<MapPoint> local_map;
             for (int i=0; i<tar_matches.size(); i++)
@@ -96,12 +101,19 @@ namespace vslam
                     mp.SetPoint2D(tar_matches.at(i));
                     mp.SetDesc(desc);
                     
+                    points_3D.push_back(point_cloud_3D.at(pc_idx));
+                    points_2D.push_back(tar_matches.at(i));
+                    
                     local_map.push_back(mp);
                     global_map.push_back(mp);
                     
                     pc_idx++;
                 }
             }
+            
+            // Compute scale factor
+            double scale_factor = Tracking::FindLinearScale(R, t, points_2D, points_3D);
+            Tracking::SetInitScale(scale_factor);
             
             kf = KeyFrame(R, t, local_map, tar_kp, tar_desc);
             

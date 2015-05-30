@@ -6,6 +6,7 @@ using namespace std;
 namespace vslam {
     
     Ptr<ORB> Tracking::orb_handler;
+    double Tracking::init_scale =  1.0f;
     
     bool Tracking::TrackMap(const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t, bool& new_kf_added)
     {
@@ -46,12 +47,22 @@ namespace vslam {
             object_points.push_back(object_point);
         }
         
+        double min_val, max_val;
+        minMaxIdx(image_points, &min_val, &max_val);
+        
         solvePnPRansac(object_points, image_points, camera_matrix, dist_coeff, Rvec, tvec,
-                       true, 100, 8.0, 100, pnp_inliers, CV_ITERATIVE);
+                       true, 100, 0.006f * max_val, 0.25f * (double)(image_points.size()), pnp_inliers, CV_EPNP);
         
         Rodrigues(Rvec, R);
         t = tvec;
         
+        /*
+        // Correct scale using current KF as reference:
+        double curr_scale = FindLinearScale(R, t, image_points, object_points);
+        double scale_ratio = Tracking::init_scale / curr_scale;
+        t *= scale_ratio;
+        */
+         
         kf.IncrementFrameCount();
         KeypointArray ref_kp = kf.GetTotalKeypoints();
         
@@ -67,7 +78,7 @@ namespace vslam {
     
     bool Tracking::NeedsNewKeyframe(KeyFrame& kf, int num_kf_kp, int num_tar_kp, int num_kf_matches)
     {
-//        cout << num_tar_kp << " " << (1.0 * num_kf_matches) / num_kf_kp << " " << kf.GetFrameCountSinceInsertion() << endl;
+        cout << num_tar_kp << " " << (1.0 * num_kf_matches) / num_kf_kp << " " << kf.GetFrameCountSinceInsertion() << endl;
         
         if (num_tar_kp < KEYFRAME_MIN_KEYPOINTS)
             return true;
@@ -132,7 +143,7 @@ namespace vslam {
         P2 = camera_matrix * P2;
         
         const float ratio_factor = ORB_SCALE_FACTOR;
-    
+        
         int num_good_points = 0;
         for (int i=0; i<full_orb_matches.size(); i++)
         {
@@ -274,6 +285,148 @@ namespace vslam {
         }
         
         return false;
+    }
+    
+    void Tracking::Normalize3DPoints(vector<Point3f> &input_points, vector<Point3f> &norm_points)
+    {
+        float max_x = numeric_limits<float>::min(), min_x = numeric_limits<float>::max();
+        float max_y = numeric_limits<float>::min(), min_y = numeric_limits<float>::max();
+        float max_z = numeric_limits<float>::min(), min_z = numeric_limits<float>::max();
+        
+        for (int i=0; i<input_points.size(); i++)
+        {
+            float x = input_points.at(i).x;
+            float y = input_points.at(i).y;
+            float z = input_points.at(i).z;
+            
+            if (x > max_x)
+                max_x = x;
+            if (x < min_x)
+                min_x = x;
+            
+            if (y > max_y)
+                max_y = y;
+            if (y < min_y)
+                min_y = y;
+            
+            if (z > max_z)
+                max_z = z;
+            if (z < min_z)
+                min_z = z;
+        }
+        
+        float x_range = fabs(max_x - min_x);
+        float y_range = fabs(max_y - min_y);
+        float z_range = fabs(max_z - min_z);
+        
+        norm_points.clear();
+        
+        for (int i=0; i<input_points.size(); i++)
+        {
+            Point3f norm_point;
+            
+            norm_point.x = input_points.at(i).x / x_range;
+            norm_point.y = input_points.at(i).y / y_range;
+            norm_point.z = input_points.at(i).z / z_range;
+            
+            norm_points.push_back(norm_point);
+        }
+    }
+    
+    // Reference: http://dare.uva.nl/document/2/113942
+    double Tracking::FindLinearScale(Mat &R, Mat &t, vector<Point2f> &image_points, vector<Point3f> &object_points)
+    {
+        double scale = 1.0f;
+        
+        Matx34d Pcam(R.at<double>(0, 0), R.at<double>(0, 1), R.at<double>(0, 2), t.at<double>(0),
+                  R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2), t.at<double>(1),
+                  R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2), t.at<double>(2));
+        
+        Mat mat_2D = Mat(2, (int)image_points.size(), CV_64F);
+        Mat mat_3D = Mat(3, (int)image_points.size(), CV_64F);
+        
+        for (int i=0; i<image_points.size(); i++)
+        {
+            mat_2D.at<double>(0, i) = image_points.at(i).x;
+            mat_2D.at<double>(1, i) = image_points.at(i).y;
+            
+            mat_3D.at<double>(0, i) = object_points.at(i).x;
+            mat_3D.at<double>(1, i) = object_points.at(i).y;
+            mat_3D.at<double>(2, i) = object_points.at(i).z;
+        }
+        
+        Mat mat_2D_homogeneous;
+        vconcat(mat_2D, Mat::zeros(1, mat_2D.size().width, mat_2D.type()), mat_2D_homogeneous);
+        
+        // Convert to homogeneous coordinates (u, v, 1):
+        Mat Qw = camera_matrix.inv() * mat_2D_homogeneous;
+        
+        // Build matrix A and vector b
+        cv::Mat_<double> A ( 2 * mat_2D.size().width, 1 );
+        cv::Mat_<double> b ( 2 * mat_2D.size().width, 1 );
+        
+        cv::Matx13d r1( Pcam(0,0), Pcam(0,1), Pcam(0,2) );
+        cv::Matx13d r2( Pcam(1,0), Pcam(1,1), Pcam(1,2) );
+        cv::Matx13d r3( Pcam(2,0), Pcam(2,1), Pcam(2,2) );
+        
+        cv::Matx23d r12;
+        cv::vconcat(r1,r2,r12);
+        
+        cv::Matx21d tu (Pcam(0,3), Pcam(1,3));
+        
+        cv::Matx21d temp1, temp2;
+        for ( int i = 0; i < mat_3D.size().width; i++ ) {
+            //temp1 = ( Pcam(1:2,1:3) * X3D(1:3,i)  -
+            //         (Pcam(3,1:3) * X3D(1:3,i)) * Qw(1:2,i));
+            cv::Matx31d pointX ( mat_3D.at<double>(0,i),
+                                mat_3D.at<double>(1,i),
+                                mat_3D.at<double>(2,i) );
+            cv::Matx21d pointx ( Qw.at<double>(0,i),
+                                Qw.at<double>(1,i) );
+            
+            cv::subtract( ((cv::Mat)r12) * (cv::Mat)pointX,
+                         (cv::Mat)pointx * ((cv::Mat)((cv::Mat)r3 * (cv::Mat)pointX)),
+                         temp1);
+            
+            //temp2 = Pcam(3,4) * Qw(1:2,i) - Pcam(1:2,4);
+            cv::subtract( Pcam(2,3) * (cv::Mat)pointx, (cv::Mat)tu, temp2);
+            
+            A.at<double>(i*2,   0) = temp2(0);
+            A.at<double>(i*2+1, 0) = temp2(1);
+            b.at<double>(i*2,   0) = temp1(0);
+            b.at<double>(i*2+1, 0) = temp1(1);
+        }
+        
+        cv::Mat scalemat = ((A.t() * b) / (A.t() * A));
+        scale = scalemat.at<double>(0, 0);
+        
+        
+        // METHOD 4
+        double scale2;
+        cv::Mat_<double> A2 ( mat_2D.size().width, 1 );
+        cv::Mat_<double> b2 ( mat_2D.size().width, 1 );
+        
+        for ( int i = 0; i < mat_3D.size().width; i++ ) {
+            cv::Matx31d pointX ( mat_3D.at<double>(0,i),
+                                mat_3D.at<double>(1,i),
+                                mat_3D.at<double>(2,i) );
+            cv::Point2d pointx ( Qw.at<double>(0,i),
+                                Qw.at<double>(1,i) );
+            
+            //                  Pcam(2,4) * ( Qw(1,i)            / Qw(2,i))            - Pcam(1,4);
+            A2.at<double>(i, 0) = Pcam(1,3) * (pointx.x / pointx.y) - Pcam(0,3);
+            
+            //                  (Pcam(1,1:3)-Pcam(2,1:3) *
+            //                  (Qw(1,i) / Qw(2,i))) * X3D(1:3,i)
+            cv::Mat temp = ((cv::Mat) r1 - ((cv::Mat) r2 * (pointx.x / pointx.y))) * (cv::Mat) pointX;
+            b2.at<double>(i, 0) = temp.at<double>(0,0);
+        }
+        scale2 = (double)((cv::Mat)((cv::Mat(A.t() * A)) * A.t() *b)).at<double>(0,0);
+        
+        scalemat = ((A2.t() * b2) / (A2.t() * A2));
+        scale2 = scalemat.at<double>(0, 0);
+
+        return scale2;
     }
     
     void Tracking::FilterPnPInliers(vector<Point3f> &object_points, vector<Point2f> &image_points, Mat& inliers)

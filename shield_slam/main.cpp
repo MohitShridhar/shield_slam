@@ -31,7 +31,7 @@ public:
        UpdateCloud(init_pc, 0, 255, 0, true);
         
 // LOCAL MAP:
-//       UpdateCloud(kf_pc, 0, 0, 255, true);
+//       UpdateCloud(kf_pc, 0, 0, 255, true); 
         
 // GLOBAL MAP & LOCAL MAP:
 //      UpdateCloud(init_pc, 0, 255, 0, true);

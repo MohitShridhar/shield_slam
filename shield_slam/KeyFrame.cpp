@@ -17,12 +17,14 @@ namespace vslam {
         insertion_frame_count = 0;
     }
     
-    KeyFrame::KeyFrame(Mat &rot_mat, Mat &trans_mat, vector<MapPoint> &map, KeypointArray &total_kp, Mat &total_desc)
+    KeyFrame::KeyFrame(Mat &rot_mat, Mat &trans_mat, vector<MapPoint> &map,
+                       KeypointArray &total_kp, Mat &total_desc)
     {
         R = rot_mat.clone();
         t = trans_mat.clone();
         
         local_map = map;
+        
         orb_kp = total_kp;
         orb_desc = total_desc.clone();
         
