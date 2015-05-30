@@ -25,6 +25,7 @@
 #define ORB_SCALE_FACTOR 1.2
 
 #include <limits>
+#include <map>
 
 using namespace cv;
 using namespace std;
@@ -37,7 +38,8 @@ namespace vslam {
         static bool TrackMap(const Mat& gray_frame, KeyFrame& kf, Mat& R, Mat& t, bool& new_kf_added);
         static bool NewKeyFrame(KeyFrame &kf, Mat &R1, Mat &R2, Mat &t1, Mat &t2,
                                 KeypointArray &kp1, KeypointArray &kp2,
-                                Mat& ref_desc, Mat& tar_desc, vector<DMatch>& matches_2D_3D);
+                                Mat& ref_desc, Mat& tar_desc, vector<DMatch>& matches_2D_3D,
+                                Mat& pnp_inliers, vector<Point3f>& prev_pc);
         
         static void SetOrbHandler(Ptr<ORB> handler)  { orb_handler = handler; }
         static void SetInitScale(double scale)  { init_scale = scale; }

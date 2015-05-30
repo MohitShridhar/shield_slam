@@ -24,6 +24,10 @@ namespace vslam {
         KeypointArray tar_kp;
         orb_handler->ExtractFeatures(tar_img, tar_kp, tar_desc);
         
+//        Mat debug_kp;
+//        drawKeypoints(gray_frame, tar_kp, debug_kp, Scalar(0, 0, 255));
+//        imshow("Frame KPs", debug_kp);
+        
         Mat ref_desc;
         PointArray ref_points;
         vector<Point3f> ref_point_cloud;
@@ -69,7 +73,8 @@ namespace vslam {
         new_kf_added = false;
         if (NeedsNewKeyframe(kf, (int)ref_points.size(), (int)tar_kp.size(), (int)matches.size()))
         {
-            new_kf_added = NewKeyFrame(kf, R_prev, R, t_prev, t, ref_kp, tar_kp, ref_desc, tar_desc, matches);
+            new_kf_added = NewKeyFrame(kf, R_prev, R, t_prev, t, ref_kp, tar_kp, ref_desc,
+                                       tar_desc, matches, pnp_inliers, object_points);
             return new_kf_added;
         }
         
@@ -78,7 +83,7 @@ namespace vslam {
     
     bool Tracking::NeedsNewKeyframe(KeyFrame& kf, int num_kf_kp, int num_tar_kp, int num_kf_matches)
     {
-        cout << num_tar_kp << " " << (1.0 * num_kf_matches) / num_kf_kp << " " << kf.GetFrameCountSinceInsertion() << endl;
+//        cout << num_tar_kp << " " << (1.0 * num_kf_matches) / num_kf_kp << " " << kf.GetFrameCountSinceInsertion() << endl;
         
         if (num_tar_kp < KEYFRAME_MIN_KEYPOINTS)
             return true;
@@ -94,7 +99,8 @@ namespace vslam {
     
     bool Tracking::NewKeyFrame(KeyFrame &kf, Mat &R1, Mat &R2, Mat &t1, Mat &t2,
                                KeypointArray &kp1, KeypointArray &kp2,
-                               Mat& ref_desc, Mat& tar_desc, vector<DMatch>& matches_2D_3D)
+                               Mat& ref_desc, Mat& tar_desc, vector<DMatch>& matches_2D_3D,
+                               Mat& pnp_inliers, vector<Point3f>& prev_pc)
     {
         vector<MapPoint> local_map;
         
@@ -142,133 +148,152 @@ namespace vslam {
                                         R2.at<double>(2, 0), R2.at<double>(2, 1), R2.at<double>(2, 2), t2.at<double>(2));
         P2 = camera_matrix * P2;
         
-        const float ratio_factor = ORB_SCALE_FACTOR;
+        // Determine ratio factor for scale consistency check:
+        const float ratio_factor = 1.5f * ORB_SCALE_FACTOR;
+        
+        // Build a hash map for existing point cloud data
+        map<int, Point3f> existing_pc;
+        for (int i=0; i<pnp_inliers.size().height; i++)
+        {
+            existing_pc[pnp_inliers.at<int>(i)] = prev_pc.at(i);
+        }
         
         int num_good_points = 0;
         for (int i=0; i<full_orb_matches.size(); i++)
         {
+            Point3f point_3D;
+            
             KeyPoint ref_kp = kp1[full_orb_matches[i].queryIdx];
             KeyPoint tar_kp = kp2[full_orb_matches[i].trainIdx];
             
-            float ref_scale_factor = pow(ORB_SCALE_FACTOR, ref_kp.octave);
-            float tar_scale_factor = pow(ORB_SCALE_FACTOR, tar_kp.octave);
-            
-            Mat ref_point_3D = Mat(3, 1, CV_64F, Scalar(0));
-            Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
-            
-            Mat ref_point_3D_tp = ref_point_3D.t();
-            
-            // Check that the point is finite:
-            if (!isfinite(ref_point_3D.at<double>(0)) ||
-                !isfinite(ref_point_3D.at<double>(1)) ||
-                !isfinite(ref_point_3D.at<double>(2)))
+            // Check if the point already exists in the map
+            if (existing_pc.count(full_orb_matches[i].queryIdx))
             {
-                continue;
+                point_3D = existing_pc[full_orb_matches[i].queryIdx];
+            }
+            else
+            {
+                float ref_scale_factor = pow(ORB_SCALE_FACTOR, ref_kp.octave);
+                float tar_scale_factor = pow(ORB_SCALE_FACTOR, tar_kp.octave);
+                
+                Mat ref_point_3D = Mat(3, 1, CV_64F, Scalar(0));
+                Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
+                
+                Mat ref_point_3D_tp = ref_point_3D.t();
+                
+                // Check that the point is finite:
+                if (!isfinite(ref_point_3D.at<double>(0)) ||
+                    !isfinite(ref_point_3D.at<double>(1)) ||
+                    !isfinite(ref_point_3D.at<double>(2)))
+                {
+                    continue;
+                }
+                
+                // Check parallax:
+                Mat ref_normal = ref_point_3D - ref_origin;
+                float ref_dist = norm(ref_normal);
+                
+                Mat tar_normal = ref_point_3D - tar_origin;
+                float tar_dist = norm(tar_normal);
+                
+                if (ref_dist == 0.0 || tar_dist == 0.0)
+                    continue;
+                
+                // OLD REPROJECTION ERROR CHECKING:
+                /*
+                 float cos_parallax = ref_normal.dot(tar_normal) / (ref_dist * tar_dist);
+                 
+                 // Check that the point is in front of the reference camera:
+                 if (ref_point_3D.at<double>(2) <= 0.0 && cos_parallax < 0.9998)
+                 {
+                 continue;
+                 }
+                 
+                 Mat tar_point_3D = R2 * ref_point_3D + t2;
+                 
+                 // Check that the point is in front of the target camera:
+                 if (tar_point_3D.at<double>(2) <= 0.0 && cos_parallax < 0.9998)
+                 {
+                 continue;
+                 }
+                 
+                 // Check reprojection error for reference image:
+                 float ref_reproj_x, ref_reproj_y;
+                 ref_reproj_x = cam_fx * (ref_point_3D.at<double>(0) / ref_point_3D.at<double>(2)) + cam_cx;
+                 ref_reproj_y = cam_fy * (ref_point_3D.at<double>(1) / ref_point_3D.at<double>(2)) + cam_cy;
+                 
+                 float ref_square_error = (ref_reproj_x - ref_kp.pt.x) * (ref_reproj_x - ref_kp.pt.x) +
+                 (ref_reproj_y - ref_kp.pt.y) * (ref_reproj_y - ref_kp.pt.y);
+                 
+                 if (ref_square_error > REPROJECTION_ERROR_TH)
+                 {
+                 continue;
+                 }
+                 
+                 // Check reprojection error for target image:
+                 float tar_reproj_x, tar_reproj_y;
+                 tar_reproj_x = cam_fx * (tar_point_3D.at<double>(0) / tar_point_3D.at<double>(2)) + cam_cx;
+                 tar_reproj_y = cam_fy * (tar_point_3D.at<double>(1) / tar_point_3D.at<double>(2)) + cam_cy;
+                 
+                 float tar_square_error = (tar_reproj_x - tar_kp.pt.x) * (tar_reproj_x - tar_kp.pt.x) +
+                 (tar_reproj_y - tar_kp.pt.y) * (tar_reproj_y - tar_kp.pt.y);
+                 
+                 if (tar_square_error > REPROJECTION_ERROR_TH)
+                 {
+                 continue;
+                 }
+                 */
+                
+                // Check if point is in front of the cameras:
+                float z1 = R1.row(2).dot(ref_point_3D_tp)+t1.at<double>(2);
+                if (z1 <= 0)
+                    continue;
+                
+                float z2 = R2.row(2).dot(ref_point_3D_tp)+t2.at<double>(2);
+                if (z2 <= 0)
+                    continue;
+                
+                // Check reprojection error for reference camera:
+                float x1 = R1.row(0).dot(ref_point_3D_tp)+t1.at<double>(0);
+                float y1 = R1.row(1).dot(ref_point_3D_tp)+t1.at<double>(1);
+                float inv_z1 = 1.0 / z1;
+                
+                float u1 = cam_fx * x1 * inv_z1 + cam_cx;
+                float v1 = cam_fy * y1 * inv_z1 + cam_cy;
+                
+                float err_x1 = u1 - ref_kp.pt.x;
+                float err_y1 = v1 - ref_kp.pt.y;
+                if (err_x1 * err_x1 + err_y1 * err_y1 > REPROJECTION_ERROR_CHI * ref_scale_factor * ref_scale_factor)
+                    continue;
+                
+                // Check reprojection error for target camera:
+                float x2 = R2.row(0).dot(ref_point_3D_tp)+t2.at<double>(0);
+                float y2 = R2.row(1).dot(ref_point_3D_tp)+t2.at<double>(1);
+                float inv_z2 = 1.0 / z2;
+                
+                float u2 = cam_fx * x2 * inv_z2 + cam_cx;
+                float v2 = cam_fy * y2 * inv_z2 + cam_cy;
+                
+                float err_x2 = u2 - tar_kp.pt.x;
+                float err_y2 = v2 - tar_kp.pt.y;
+                if (err_x2 * err_x2 + err_y2 * err_y2 > REPROJECTION_ERROR_CHI * tar_scale_factor * tar_scale_factor)
+                    continue;
+                
+                // Check scale consistency:
+                float ratio_dist = ref_dist / tar_dist;
+                float ratio_octave = ref_scale_factor / tar_scale_factor;
+                
+                if (ratio_dist * ratio_factor < ratio_octave || ratio_dist > ratio_octave * ratio_factor)
+                    continue;
+                
+                
+                point_3D = Point3f(ref_point_3D.at<double>(0), ref_point_3D.at<double>(1), ref_point_3D.at<double>(2));
             }
             
-            // Check parallax:
-            Mat ref_normal = ref_point_3D - ref_origin;
-            float ref_dist = norm(ref_normal);
-            
-            Mat tar_normal = ref_point_3D - tar_origin;
-            float tar_dist = norm(tar_normal);
-            
-            if (ref_dist == 0.0 || tar_dist == 0.0)
-                continue;
-            
-            // OLD REPROJECTION ERROR CHECKING:
-            /*
-            float cos_parallax = ref_normal.dot(tar_normal) / (ref_dist * tar_dist);
-            
-            // Check that the point is in front of the reference camera:
-            if (ref_point_3D.at<double>(2) <= 0.0 && cos_parallax < 0.9998)
-            {
-                continue;
-            }
-            
-            Mat tar_point_3D = R2 * ref_point_3D + t2;
-            
-            // Check that the point is in front of the target camera:
-            if (tar_point_3D.at<double>(2) <= 0.0 && cos_parallax < 0.9998)
-            {
-                continue;
-            }
-
-            // Check reprojection error for reference image:
-            float ref_reproj_x, ref_reproj_y;
-            ref_reproj_x = cam_fx * (ref_point_3D.at<double>(0) / ref_point_3D.at<double>(2)) + cam_cx;
-            ref_reproj_y = cam_fy * (ref_point_3D.at<double>(1) / ref_point_3D.at<double>(2)) + cam_cy;
-            
-            float ref_square_error = (ref_reproj_x - ref_kp.pt.x) * (ref_reproj_x - ref_kp.pt.x) +
-            (ref_reproj_y - ref_kp.pt.y) * (ref_reproj_y - ref_kp.pt.y);
-            
-            if (ref_square_error > REPROJECTION_ERROR_TH)
-            {
-                continue;
-            }
-            
-            // Check reprojection error for target image:
-            float tar_reproj_x, tar_reproj_y;
-            tar_reproj_x = cam_fx * (tar_point_3D.at<double>(0) / tar_point_3D.at<double>(2)) + cam_cx;
-            tar_reproj_y = cam_fy * (tar_point_3D.at<double>(1) / tar_point_3D.at<double>(2)) + cam_cy;
-            
-            float tar_square_error = (tar_reproj_x - tar_kp.pt.x) * (tar_reproj_x - tar_kp.pt.x) +
-            (tar_reproj_y - tar_kp.pt.y) * (tar_reproj_y - tar_kp.pt.y);
-            
-            if (tar_square_error > REPROJECTION_ERROR_TH)
-            {
-                continue;
-            }
-            */
-            
-            // Check if point is in front of the cameras:
-            float z1 = R1.row(2).dot(ref_point_3D_tp)+t1.at<double>(2);
-            if (z1 <= 0)
-                continue;
-            
-            float z2 = R2.row(2).dot(ref_point_3D_tp)+t2.at<double>(2);
-            if (z2 <= 0)
-                continue;
-            
-            // Check reprojection error for reference camera:
-            float x1 = R1.row(0).dot(ref_point_3D_tp)+t1.at<double>(0);
-            float y1 = R1.row(1).dot(ref_point_3D_tp)+t1.at<double>(1);
-            float inv_z1 = 1.0 / z1;
-            
-            float u1 = cam_fx * x1 * inv_z1 + cam_cx;
-            float v1 = cam_fy * y1 * inv_z1 + cam_cy;
-            
-            float err_x1 = u1 - ref_kp.pt.x;
-            float err_y1 = v1 - ref_kp.pt.y;
-            if (err_x1 * err_x1 + err_y1 * err_y1 > REPROJECTION_ERROR_CHI * ref_scale_factor * ref_scale_factor)
-                continue;
-        
-            // Check reprojection error for target camera:
-            float x2 = R2.row(0).dot(ref_point_3D_tp)+t2.at<double>(0);
-            float y2 = R2.row(1).dot(ref_point_3D_tp)+t2.at<double>(1);
-            float inv_z2 = 1.0 / z2;
-            
-            float u2 = cam_fx * x2 * inv_z2 + cam_cx;
-            float v2 = cam_fy * y2 * inv_z2 + cam_cy;
-            
-            float err_x2 = u2 - tar_kp.pt.x;
-            float err_y2 = v2 - tar_kp.pt.y;
-            if (err_x2 * err_x2 + err_y2 * err_y2 > REPROJECTION_ERROR_CHI * tar_scale_factor * tar_scale_factor)
-                continue;
-             
-            // Check scale consistency:
-            float ratio_dist = ref_dist / tar_dist;
-            float ratio_octave = ref_scale_factor / tar_scale_factor;
-            
-            if (ratio_dist * ratio_factor < ratio_octave || ratio_dist > ratio_octave * ratio_factor)
-                continue;
-            
-            // Create MapPoint:
             Mat desc;
             tar_desc.row(full_orb_matches[i].trainIdx).copyTo(desc);
-
-            Point3f point_3D = Point3f(ref_point_3D.at<double>(0), ref_point_3D.at<double>(1), ref_point_3D.at<double>(2));
             
+            // Create MapPoint:
             MapPoint mp;
             mp.SetPoint3D(point_3D);
             mp.SetPoint2D(tar_kp.pt);
