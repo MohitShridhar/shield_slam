@@ -45,6 +45,7 @@ namespace vslam
         float SH = CheckHomography(undist_ref_matches, undist_tar_matches, H, h_inliers, h_num_inliers);
         float SF = CheckFundamental(undist_ref_matches, undist_tar_matches, F, f_inliers, f_num_inliers);
         
+        
         /*
         float SH = 0.0f, SF = 0.0f;
         vector<bool> h_inliers, f_inliers;
@@ -111,8 +112,8 @@ namespace vslam
             }
             
             // Compute scale factor
-            double scale_factor = Tracking::FindLinearScale(R, t, points_2D, points_3D);
-            Tracking::SetInitScale(scale_factor);
+//            double scale_factor = Tracking::FindLinearScale(R, t, points_2D, points_3D);
+//            Tracking::SetInitScale(scale_factor);
             
             kf = KeyFrame(R, t, local_map, tar_kp, tar_desc);
             

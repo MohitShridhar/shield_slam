@@ -62,6 +62,8 @@ namespace vslam {
     protected:
         static Ptr<ORB> orb_handler;
         static double init_scale;
+        
+        static bool has_scale_init;
     };
 }
 

@@ -12,7 +12,7 @@ using namespace vslam;
 class VisualizerListener : public UpdateListener {
     
 public:
-	void update(vector<MapPoint> global_map, vector<MapPoint> local_map, vector<Mat> camera_rot, vector<Mat> camera_pos) {
+	void update(vector<MapPoint> global_map, vector<MapPoint> local_map, Mat camera_rot, Mat camera_pos) {
         
         vector<Point3d> init_pc;
         vector<Point3d> kf_pc;
@@ -37,9 +37,7 @@ public:
 //      UpdateCloud(init_pc, 0, 255, 0, true);
 //		UpdateCloud(kf_pc, 0, 0, 255, false);
         
-		for(unsigned int i=0;i<camera_rot.size();i++) {
-            AddCamera(camera_rot.at(i), camera_pos.at(i));
-		}
+        AddCamera(camera_rot, camera_pos);
 	}
 };
 
@@ -92,7 +90,7 @@ int main(int argc, char** argv)
             break;
         }
         
-        visualizerListener->update(slam.GetGlobalMap(), slam.GetCurrKeyFrame().GetMap(), slam.GetCameraRot(), slam.GetCameraPose());
+        visualizerListener->update(slam.GetGlobalMap(), slam.GetCurrKeyFrame().GetMap(), slam.GetCameraRot().back(), slam.GetCameraPose().back());
         
         RunVisualizationOnly();
         

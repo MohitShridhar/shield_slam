@@ -18,7 +18,7 @@ std::deque<std::pair<std::string,pcl::PolygonMesh> > cam_meshes;
 int ipolygon[18] = {0,1,2,  0,3,1,  0,4,3,  0,2,4,  3,1,4,   2,4,1};
 int camera_count = 0;
 
-bool aggregate_view_frustrums = false;
+bool aggregate_view_frustrums = true;
 
 void RunVisualizationThread()
 {
@@ -142,14 +142,13 @@ void AddCamera(const Mat& R, const Mat& t)
              R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2),
              R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2);
     
-    Vector3f t_vec = Vector3f(t.at<double>(0) * X_SCALE, t.at<double>(1) * Y_SCALE, t.at<double>(2) * 1.0f);
-//    t_vec = -r_mat.transpose() * t_vec;
-    
-    t_vec = Vector3f(t_vec.x(), t_vec.y(), t_vec.z());
+    Vector3f t_vec = Vector3f(t.at<double>(0) * X_SCALE, t.at<double>(1) * Y_SCALE, t.at<double>(2) * Z_SCALE);
     
     Vector3f vec_right = r_mat.row(0).normalized() * CAMERA_POSE_SCALE;
-    Vector3f vec_up = r_mat.row(1).normalized() * CAMERA_POSE_SCALE;
+    Vector3f vec_up = -r_mat.row(1).normalized() * CAMERA_POSE_SCALE;
     Vector3f vec_forward = r_mat.row(2).normalized() * CAMERA_POSE_SCALE;
+    
+    cout << vec_right << endl;
     
     Vector3f rgb(255, 0, 0);
     

@@ -7,6 +7,7 @@ namespace vslam {
     
     Ptr<ORB> Tracking::orb_handler;
     double Tracking::init_scale =  1.0f;
+    bool Tracking::has_scale_init = false;
     
     bool Tracking::TrackMap(const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t, bool& new_kf_added)
     {
@@ -60,9 +61,18 @@ namespace vslam {
         /*
         // Correct scale using current KF as reference:
         double curr_scale = FindLinearScale(R, t, image_points, object_points);
-        double scale_ratio = Tracking::init_scale / curr_scale;
-        t *= scale_ratio;
-        cout << scale_ratio << endl;
+        if (!has_scale_init)
+        {
+            Tracking::init_scale = curr_scale;
+            has_scale_init = true;
+        }
+        else
+        {
+            double scale_ratio = Tracking::init_scale / curr_scale;
+            t *= scale_ratio;
+            
+            cout << scale_ratio << endl;
+        }
         */
         
         kf.IncrementFrameCount();
@@ -73,12 +83,6 @@ namespace vslam {
         {
             Mat R_prev = kf.GetRotation();
             Mat t_prev = kf.GetTranslation();
-            
-            /*
-            // Compute camera position in object coordinates:
-            Mat R_oc = R.t();
-            Mat t_oc = -R_oc * t;
-            */
             
             new_kf_added = NewKeyFrame(kf, R_prev, R, t_prev, t, ref_kp, tar_kp, ref_desc,
                                        tar_desc, matches, pnp_inliers, max_val, object_points);
@@ -459,7 +463,7 @@ namespace vslam {
         scalemat = ((A2.t() * b2) / (A2.t() * A2));
         scale2 = scalemat.at<double>(0, 0);
 
-        return scale;
+        return scale2;
     }
     
     void Tracking::FilterPnPInliers(vector<Point3f> &object_points, vector<Point2f> &image_points, Mat& inliers)
