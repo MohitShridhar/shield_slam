@@ -35,7 +35,7 @@ public:
         
 // GLOBAL MAP & LOCAL MAP:
 //      UpdateCloud(init_pc, 0, 255, 0, true);
-//		UpdateCloud(kf_pc, 0, 0, 255, false);
+//		UpdateCloud(kf_pc, 255, 255, 255, false);
         
         AddCamera(camera_rot, camera_pos);
 	}

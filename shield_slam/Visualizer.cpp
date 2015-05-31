@@ -148,8 +148,6 @@ void AddCamera(const Mat& R, const Mat& t)
     Vector3f vec_up = -r_mat.row(1).normalized() * CAMERA_POSE_SCALE;
     Vector3f vec_forward = r_mat.row(2).normalized() * CAMERA_POSE_SCALE;
     
-    cout << vec_right << endl;
-    
     Vector3f rgb(255, 0, 0);
     
 	pcl::PointCloud<pcl::PointXYZRGB> mesh_cld;

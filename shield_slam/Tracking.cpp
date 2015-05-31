@@ -52,9 +52,14 @@ namespace vslam {
         double min_val, max_val;
         minMaxIdx(image_points, &min_val, &max_val);
         
+        /*
         solvePnPRansac(object_points, image_points, camera_matrix, dist_coeff, Rvec, tvec,
                        true, 100, 0.006f * max_val, 0.24f * (double)(image_points.size()), pnp_inliers, CV_ITERATIVE);
+        */
         
+        solvePnPRansac(object_points, image_points, camera_matrix, dist_coeff, Rvec, tvec,
+                       true, 100, 8.0f, 100, pnp_inliers, CV_ITERATIVE);
+         
         Rodrigues(Rvec, R);
         t = tvec;
         
@@ -121,10 +126,10 @@ namespace vslam {
         orb_handler->MatchFeatures(ref_desc, tar_desc, full_orb_matches);
         
         // Intrinsic parameters (3D->2D) for projection error checking:
-        float cam_fx = camera_matrix.at<double>(0, 0);
-        float cam_fy = camera_matrix.at<double>(1, 1);
-        float cam_cx = camera_matrix.at<double>(0, 2);
-        float cam_cy = camera_matrix.at<double>(1, 2);
+        double cam_fx = camera_matrix.at<double>(0, 0);
+        double cam_fy = camera_matrix.at<double>(1, 1);
+        double cam_cx = camera_matrix.at<double>(0, 2);
+        double cam_cy = camera_matrix.at<double>(1, 2);
         
         // P1 = K[R1|t1]
         Mat ref_origin = -R1.t()*t1;
@@ -489,7 +494,7 @@ namespace vslam {
     
     void Tracking::Triangulate(const KeyPoint &ref_keypoint, const KeyPoint &tar_keypoint, const Mat &P1, const Mat &P2, Mat &point_3D)
     {
-        /*
+        
         cv::Mat A(4,4,CV_64F);
         
         A.row(0) = ref_keypoint.pt.x*P1.row(2)-P1.row(0);
@@ -500,15 +505,16 @@ namespace vslam {
         cv::Mat u,w,vt;
         cv::SVD::compute(A,w,u,vt,cv::SVD::MODIFY_A| cv::SVD::FULL_UV);
         point_3D = vt.row(3).t();
-        point_3D = point_3D.rowRange(0,3) / point_3D.at<float>(3);
-        */
+        point_3D = point_3D.rowRange(0,3) / point_3D.at<double>(3);
         
         
+        /*
         Point3d ref_point (ref_keypoint.pt.x, ref_keypoint.pt.y, 1.0);
         Point3d tar_point (tar_keypoint.pt.x, tar_keypoint.pt.y, 1.0);
         
         Matx31d out_3D = IterativeLinearLSTriangulation(ref_point, tar_point, P1, P2);
         point_3D = Mat(out_3D);
+         */
     }
     
     // Reference: https://perception.inrialpes.fr/Publications/1997/HS97/HartleySturm-cviu97.pdf & Mastering Practical OpenCV
