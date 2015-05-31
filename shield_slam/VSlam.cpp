@@ -43,18 +43,25 @@ namespace vslam
         
         if (curr_state == TRACKING)
         {
-            Mat R_vec = curr_kf.GetRotation().clone();
-            Mat t_vec = curr_kf.GetTranslation().clone();
+            Mat R_vec = world_camera_rot.back().clone();
+            Mat t_vec = world_camera_pos.back().clone();
             
             bool new_kf_added = false;
             bool is_lost = !Tracking::TrackMap(frame, curr_kf, R_vec, t_vec, new_kf_added);
             
             if (!is_lost)
             {
-                AppendCameraPose(curr_kf.GetRotation(), curr_kf.GetTranslation());
-
-                vector<MapPoint> kf_map = curr_kf.GetMap();
-                global_map_.insert(global_map_.end(), kf_map.begin(), kf_map.end());
+                if (new_kf_added)
+                {
+                    CommpoundCameraPose();
+                    
+                    vector<MapPoint> kf_map = curr_kf.GetMap();
+                    global_map_.insert(global_map_.end(), kf_map.begin(), kf_map.end());
+                }
+                else
+                {
+                    AppendCameraPose(R_vec, t_vec);
+                }
             }
             else
             {
@@ -70,8 +77,14 @@ namespace vslam
     
     void VSlam::AppendCameraPose(Mat rot, Mat pos)
     {
-        world_camera_rot.push_back(curr_kf.GetRotation() * rot);
-        world_camera_pos.push_back(curr_kf.GetTranslation() + pos);
+        world_camera_rot.push_back(rot * curr_kf.GetRotation());
+        world_camera_pos.push_back(pos + curr_kf.GetTranslation());
+    }
+    
+    void VSlam::CommpoundCameraPose(void)
+    {
+        world_camera_rot.push_back(curr_kf.GetRotation());
+        world_camera_pos.push_back(curr_kf.GetTranslation());
     }
     
     void VSlam::LoadIntrinsicParameters()

@@ -47,6 +47,7 @@ namespace vslam
         
         void LoadIntrinsicParameters(void);
         void AppendCameraPose(Mat rot, Mat pos);
+        void CommpoundCameraPose();
     
     protected:
         

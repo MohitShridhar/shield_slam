@@ -142,7 +142,7 @@ void AddCamera(const Mat& R, const Mat& t)
              R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2),
              R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2);
     
-    Vector3f t_vec = Vector3f(t.at<double>(0) * X_SCALE, t.at<double>(1) * Y_SCALE, t.at<double>(2) * 1.0f);
+    Vector3f t_vec = Vector3f(t.at<double>(0) * X_SCALE, t.at<double>(1) * Y_SCALE, t.at<double>(2) * Z_SCALE);
     t_vec = -r_mat.transpose() * t_vec;
     
     t_vec = Vector3f(t_vec.x(), t_vec.y(), t_vec.z());

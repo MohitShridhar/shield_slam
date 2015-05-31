@@ -10,7 +10,7 @@
 #define GRID_CELL_COLS 1
 
 #define KNN_RATIO_INIT_THRESHOLD 0.7
-#define KNN_RATIO_TRACKING_THRESHOLD 0.7
+#define KNN_RATIO_TRACKING_THRESHOLD 0.6
 
 using namespace cv;
 using namespace std;

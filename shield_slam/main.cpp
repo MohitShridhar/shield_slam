@@ -45,8 +45,9 @@ public:
 
 int main(int argc, char** argv)
 {
-    VideoCapture cap("/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/indoor.avi");
+//    VideoCapture cap("/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/indoor.avi");
 //    VideoCapture cap("/Users/MohitSridhar/Downloads/kitti_youtube.avi");
+    VideoCapture cap("/Users/MohitSridhar/Downloads/VID_20150530_120719.mp4");
     
     if (!cap.isOpened())
     {
@@ -62,6 +63,9 @@ int main(int argc, char** argv)
     // Initialize:
     Mat frame;
     cap >> frame;
+    
+    Size size(640, 480);
+    resize(frame, frame, size);
     
     // Load Initialized Map:
     RunVisualizationOnly();
@@ -80,6 +84,7 @@ int main(int argc, char** argv)
             break;
         
         
+        resize(frame, frame, size);
         slam.ProcessFrame(frame);
         
         if (waitKey(30) == 27)

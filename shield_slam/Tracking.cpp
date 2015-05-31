@@ -12,9 +12,6 @@ namespace vslam {
     {
         Mat Rvec, tvec, pnp_inliers;
         
-        Mat R_prev = R.clone();
-        Mat t_prev = t.clone();
-        
         Rodrigues(R, Rvec);
         tvec = t;
 
@@ -24,9 +21,9 @@ namespace vslam {
         KeypointArray tar_kp;
         orb_handler->ExtractFeatures(tar_img, tar_kp, tar_desc);
         
-//        Mat debug_kp;
-//        drawKeypoints(gray_frame, tar_kp, debug_kp, Scalar(0, 0, 255));
-//        imshow("Frame KPs", debug_kp);
+        Mat debug_kp;
+        drawKeypoints(gray_frame, tar_kp, debug_kp, Scalar(0, 0, 255));
+        imshow("Frame KPs", debug_kp);
         
         Mat ref_desc;
         PointArray ref_points;
@@ -65,16 +62,23 @@ namespace vslam {
         double curr_scale = FindLinearScale(R, t, image_points, object_points);
         double scale_ratio = Tracking::init_scale / curr_scale;
         t *= scale_ratio;
+        cout << scale_ratio << endl;
         */
-         
+        
         kf.IncrementFrameCount();
         KeypointArray ref_kp = kf.GetTotalKeypoints();
         
         new_kf_added = false;
         if (NeedsNewKeyframe(kf, (int)ref_points.size(), (int)tar_kp.size(), (int)matches.size()))
         {
-            new_kf_added = NewKeyFrame(kf, R_prev, R, t_prev, t, ref_kp, tar_kp, ref_desc,
-                                       tar_desc, matches, pnp_inliers, object_points);
+            Mat R_prev = kf.GetRotation();
+            Mat t_prev = kf.GetTranslation();
+            
+            Mat R_cw = R * R_prev;
+            Mat t_cw = t + t_prev;
+            
+            new_kf_added = NewKeyFrame(kf, R_prev, R_cw, t_prev, t_cw, ref_kp, tar_kp, ref_desc,
+                                       tar_desc, matches, pnp_inliers, max_val, object_points);
             return new_kf_added;
         }
         
@@ -100,28 +104,9 @@ namespace vslam {
     bool Tracking::NewKeyFrame(KeyFrame &kf, Mat &R1, Mat &R2, Mat &t1, Mat &t2,
                                KeypointArray &kp1, KeypointArray &kp2,
                                Mat& ref_desc, Mat& tar_desc, vector<DMatch>& matches_2D_3D,
-                               Mat& pnp_inliers, vector<Point3f>& prev_pc)
+                               Mat& pnp_inliers, double max_val, vector<Point3f>& prev_pc)
     {
         vector<MapPoint> local_map;
-        
-        /*
-        // Add existing triangulated 3D points
-        vector<Point3f> prev_kf_local_map = kf.Get3DPoints();
-        vector<MapPoint> existing_points;
-        for (int i=0; i<matches_2D_3D.size(); i++)
-        {
-            MapPoint mp;
-            mp.SetPoint2D(kp2[matches_2D_3D[i].trainIdx].pt);
-            mp.SetPoint3D(prev_kf_local_map.at(matches_2D_3D[i].queryIdx));
-            
-            Mat desc;
-            tar_desc.row(matches_2D_3D[i].trainIdx).copyTo(desc);
-            mp.SetDesc(desc);
-            
-            existing_points.push_back(mp);
-        }
-        local_map.insert(local_map.end(), existing_points.begin(), existing_points.end());
-        */
         
         // Do full feature matching:
         vector<DMatch> full_orb_matches;
@@ -148,19 +133,39 @@ namespace vslam {
                                         R2.at<double>(2, 0), R2.at<double>(2, 1), R2.at<double>(2, 2), t2.at<double>(2));
         P2 = camera_matrix * P2;
         
+        // TODO: check for still camera (corrupts scale)
+        
         // Determine ratio factor for scale consistency check:
         const float ratio_factor = 1.5f * ORB_SCALE_FACTOR;
         
-        // Build a hash map for existing point cloud data
+        // Build a hash map of existing point cloud points
         map<int, Point3f> existing_pc;
         for (int i=0; i<pnp_inliers.size().height; i++)
         {
             existing_pc[pnp_inliers.at<int>(i)] = prev_pc.at(i);
         }
         
+        /*
+        // Find fundamental matrix to determine outliers:
+        PointArray ref_points, tar_points;
+        for (int i=0; i<full_orb_matches.size(); i++)
+        {
+            ref_points.push_back(kp1[full_orb_matches[i].queryIdx].pt);
+            tar_points.push_back(kp2[full_orb_matches[i].trainIdx].pt);
+        }
+        
+        vector<uchar> f_status(full_orb_matches.size());
+        findFundamentalMat(ref_points, tar_points, f_status, FM_RANSAC, 0.006 * max_val, 0.99);
+        */
+         
         int num_good_points = 0;
         for (int i=0; i<full_orb_matches.size(); i++)
         {
+            /*
+            if (!f_status[i])
+                continue;
+            */
+             
             Point3f point_3D;
             
             KeyPoint ref_kp = kp1[full_orb_matches[i].queryIdx];
@@ -286,7 +291,6 @@ namespace vslam {
                 if (ratio_dist * ratio_factor < ratio_octave || ratio_dist > ratio_octave * ratio_factor)
                     continue;
                 
-                
                 point_3D = Point3f(ref_point_3D.at<double>(0), ref_point_3D.at<double>(1), ref_point_3D.at<double>(2));
             }
             
@@ -381,7 +385,7 @@ namespace vslam {
         }
         
         Mat mat_2D_homogeneous;
-        vconcat(mat_2D, Mat::zeros(1, mat_2D.size().width, mat_2D.type()), mat_2D_homogeneous);
+        vconcat(mat_2D, Mat::ones(1, mat_2D.size().width, mat_2D.type()), mat_2D_homogeneous);
         
         // Convert to homogeneous coordinates (u, v, 1):
         Mat Qw = camera_matrix.inv() * mat_2D_homogeneous;
@@ -390,14 +394,15 @@ namespace vslam {
         cv::Mat_<double> A ( 2 * mat_2D.size().width, 1 );
         cv::Mat_<double> b ( 2 * mat_2D.size().width, 1 );
         
-        cv::Matx13d r1( Pcam(0,0), Pcam(0,1), Pcam(0,2) );
-        cv::Matx13d r2( Pcam(1,0), Pcam(1,1), Pcam(1,2) );
-        cv::Matx13d r3( Pcam(2,0), Pcam(2,1), Pcam(2,2) );
+        cv::Matx13d r1( R.at<double>(0, 0), R.at<double>(0, 1), R.at<double>(0, 2) );
+        cv::Matx13d r2( R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2) );
+        cv::Matx13d r3( R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2) );
         
         cv::Matx23d r12;
         cv::vconcat(r1,r2,r12);
         
         cv::Matx21d tu (Pcam(0,3), Pcam(1,3));
+        
         
         cv::Matx21d temp1, temp2;
         for ( int i = 0; i < mat_3D.size().width; i++ ) {
@@ -451,7 +456,7 @@ namespace vslam {
         scalemat = ((A2.t() * b2) / (A2.t() * A2));
         scale2 = scalemat.at<double>(0, 0);
 
-        return scale2;
+        return scale;
     }
     
     void Tracking::FilterPnPInliers(vector<Point3f> &object_points, vector<Point2f> &image_points, Mat& inliers)

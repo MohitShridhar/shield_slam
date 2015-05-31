@@ -71,7 +71,7 @@ namespace vslam {
         Mat R_t = R.row(2);
         R_t = R_t.t();
         
-        float z_world = t.at<float>(2);
+        float z_world = t.at<double>(2);
         
         vector<float> depths;
         
