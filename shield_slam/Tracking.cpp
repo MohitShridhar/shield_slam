@@ -11,7 +11,7 @@ namespace vslam {
     bool Tracking::TrackMap(const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t, bool& new_kf_added)
     {
         Mat Rvec, tvec, pnp_inliers;
-        
+
         Rodrigues(R, Rvec);
         tvec = t;
 
@@ -52,7 +52,7 @@ namespace vslam {
         minMaxIdx(image_points, &min_val, &max_val);
         
         solvePnPRansac(object_points, image_points, camera_matrix, dist_coeff, Rvec, tvec,
-                       true, 100, 0.006f * max_val, 0.25f * (double)(image_points.size()), pnp_inliers, CV_EPNP);
+                       true, 100, 0.006f * max_val, 0.24f * (double)(image_points.size()), pnp_inliers, CV_ITERATIVE);
         
         Rodrigues(Rvec, R);
         t = tvec;
@@ -74,10 +74,13 @@ namespace vslam {
             Mat R_prev = kf.GetRotation();
             Mat t_prev = kf.GetTranslation();
             
-            Mat R_cw = R * R_prev;
-            Mat t_cw = t + t_prev;
+            /*
+            // Compute camera position in object coordinates:
+            Mat R_oc = R.t();
+            Mat t_oc = -R_oc * t;
+            */
             
-            new_kf_added = NewKeyFrame(kf, R_prev, R_cw, t_prev, t_cw, ref_kp, tar_kp, ref_desc,
+            new_kf_added = NewKeyFrame(kf, R_prev, R, t_prev, t, ref_kp, tar_kp, ref_desc,
                                        tar_desc, matches, pnp_inliers, max_val, object_points);
             return new_kf_added;
         }

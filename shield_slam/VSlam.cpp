@@ -53,15 +53,11 @@ namespace vslam
             {
                 if (new_kf_added)
                 {
-                    CommpoundCameraPose();
-                    
                     vector<MapPoint> kf_map = curr_kf.GetMap();
                     global_map_.insert(global_map_.end(), kf_map.begin(), kf_map.end());
                 }
-                else
-                {
-                    AppendCameraPose(R_vec, t_vec);
-                }
+                
+                AppendCameraPose(R_vec, t_vec);
             }
             else
             {
@@ -77,16 +73,10 @@ namespace vslam
     
     void VSlam::AppendCameraPose(Mat rot, Mat pos)
     {
-        world_camera_rot.push_back(rot * curr_kf.GetRotation());
-        world_camera_pos.push_back(pos + curr_kf.GetTranslation());
+        world_camera_rot.push_back(rot);
+        world_camera_pos.push_back(pos);
     }
-    
-    void VSlam::CommpoundCameraPose(void)
-    {
-        world_camera_rot.push_back(curr_kf.GetRotation());
-        world_camera_pos.push_back(curr_kf.GetTranslation());
-    }
-    
+
     void VSlam::LoadIntrinsicParameters()
     {
         FileStorage fs("/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/shield_slam/CameraIntrinsics.yaml", FileStorage::READ);

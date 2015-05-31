@@ -45,7 +45,6 @@ namespace vslam
         float SH = CheckHomography(undist_ref_matches, undist_tar_matches, H, h_inliers, h_num_inliers);
         float SF = CheckFundamental(undist_ref_matches, undist_tar_matches, F, f_inliers, f_num_inliers);
         
-
         /*
         float SH = 0.0f, SF = 0.0f;
         vector<bool> h_inliers, f_inliers;
@@ -213,6 +212,8 @@ namespace vslam
         Normalize(tar_keypoints, tar_norm_kp, T2);
         
         Mat H_norm = findHomography(ref_norm_kp, tar_norm_kp, CV_RANSAC, 3);
+        H_norm.convertTo(H_norm, CV_64F);
+        
         H = T2.inv() * H_norm * T1;
         
         score = CheckHomography(ref_keypoints, tar_keypoints, H, match_inliers, num_inliers);
@@ -388,7 +389,7 @@ namespace vslam
         vector<bool> best_triangulated_state;
         
         float norm_triangulation_score = ScoreRt(p_R, p_t, ref_keypoints, tar_keypoints, inliers, matches, best_points, max_parallax, best_triangulated_state, best_trans_idx);
-        
+                
         if (norm_triangulation_score > TRIANGULATION_NORM_SCORE_H_TH && max_parallax > PARALLAX_MIN_DEGREES)
         {
             p_R.at(best_trans_idx).copyTo(R);
