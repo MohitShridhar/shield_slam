@@ -17,6 +17,8 @@
 #define Y_SCALE 1.0
 #define Z_SCALE 560.0
 
+#define MAX_PC_VAL 100
+
 using namespace cv;
 using namespace std;
 

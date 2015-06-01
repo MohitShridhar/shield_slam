@@ -34,9 +34,9 @@ namespace vslam
         
         if (curr_state == INITIALIZING)
         {
-            if(initializer.InitializeMap(orb_handler, initial_frame, frame, curr_kf, global_map_))
+            if(initializer.InitializeMap(orb_handler, initial_frame, frame, keyframes))
             {
-                AppendCameraPose(curr_kf.GetRotation(), curr_kf.GetTranslation());
+                AppendCameraPose(keyframes.back().GetRotation(), keyframes.back().GetTranslation());
                 curr_state = TRACKING;
             }
         }
@@ -47,16 +47,10 @@ namespace vslam
             Mat t_vec = world_camera_pos.back().clone();
             
             bool new_kf_added = false;
-            bool is_lost = !Tracking::TrackMap(frame, curr_kf, R_vec, t_vec, new_kf_added);
+            bool is_lost = !Tracking::TrackMap(frame, keyframes, R_vec, t_vec, new_kf_added);
             
             if (!is_lost)
             {
-                if (new_kf_added)
-                {
-                    vector<MapPoint> kf_map = curr_kf.GetMap();
-                    global_map_.insert(global_map_.end(), kf_map.begin(), kf_map.end());
-                }
-                
                 AppendCameraPose(R_vec, t_vec);
             }
             else

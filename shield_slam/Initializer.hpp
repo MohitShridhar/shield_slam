@@ -39,7 +39,7 @@ namespace vslam
         Initializer();
         virtual ~Initializer() = default;
         
-        bool InitializeMap(Ptr<ORB> orb_handler, Mat& img_ref, Mat& img_tar, KeyFrame& kf, vector<MapPoint>& global_map);
+        bool InitializeMap(Ptr<ORB> orb_handler, Mat& img_ref, Mat& img_tar, vector<KeyFrame>& keyframes);
         
         Mat FindHomography(PointArray& ref_keypoints, PointArray& tar_keypoints, float& score, vector<bool>& match_inliers, int& num_inliers);
         Mat FindFundamental(PointArray& ref_keypoints, PointArray& tar_keypoints, float& score, vector<bool>& match_inliers, int& num_inliers);

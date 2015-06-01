@@ -103,7 +103,10 @@ void UpdateCloud(const vector<Point3d>& point_cloud, const int r, const int g, c
             point_cloud[i].z != point_cloud[i].z ||
             isnan(point_cloud[i].x) ||
             isnan(point_cloud[i].y) ||
-            isnan(point_cloud[i].z))
+            isnan(point_cloud[i].z) ||
+            point_cloud[i].x > MAX_PC_VAL ||
+            point_cloud[i].y > MAX_PC_VAL ||
+            point_cloud[i].z > MAX_PC_VAL)
         {
             continue;
         }
@@ -142,7 +145,8 @@ void AddCamera(const Mat& R, const Mat& t)
              R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2),
              R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2);
     
-    Vector3f t_vec = Vector3f(t.at<double>(0) * X_SCALE, t.at<double>(1) * Y_SCALE, t.at<double>(2) * Z_SCALE);
+    Vector3f t_vec = Vector3f(-t.at<double>(0) * X_SCALE, t.at<double>(1) * Y_SCALE, t.at<double>(2) * Z_SCALE);
+    t_vec = -r_mat.transpose() * t_vec;
     
     Vector3f vec_right = r_mat.row(0).normalized() * CAMERA_POSE_SCALE;
     Vector3f vec_up = -r_mat.row(1).normalized() * CAMERA_POSE_SCALE;

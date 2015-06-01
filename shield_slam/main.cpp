@@ -12,20 +12,32 @@ using namespace vslam;
 class VisualizerListener : public UpdateListener {
     
 public:
-	void update(vector<MapPoint> global_map, vector<MapPoint> local_map, Mat camera_rot, Mat camera_pos) {
+	void update(vector<KeyFrame> keyframes, Mat camera_rot, Mat camera_pos) {
         
         vector<Point3d> init_pc;
         vector<Point3d> kf_pc;
         
-        for (int i=0; i<global_map.size(); i++)
-        {
-            init_pc.push_back(global_map.at(i).GetPoint3D());
-        }
+        if (keyframes.empty())
+            return;
+        
+        vector<MapPoint> local_map = keyframes.back().GetMap();
+        vector<MapPoint> global_map;
         
         for (int i=0; i<local_map.size(); i++)
         {
             kf_pc.push_back(local_map.at(i).GetPoint3D());
         }
+        
+        for (int i=0; i<keyframes.size(); i++)
+        {
+            vector<MapPoint> kf_map = keyframes.at(i).GetMap();
+            
+            for (int j=0; j<kf_map.size(); j++)
+            {
+                init_pc.push_back(kf_map.at(j).GetPoint3D());
+            }
+        }
+        
         
 // GLOBAL MAP:
        UpdateCloud(init_pc, 0, 255, 0, true);
@@ -90,7 +102,7 @@ int main(int argc, char** argv)
             break;
         }
         
-        visualizerListener->update(slam.GetGlobalMap(), slam.GetCurrKeyFrame().GetMap(), slam.GetCameraRot().back(), slam.GetCameraPose().back());
+        visualizerListener->update(slam.GetKeyFrames(), slam.GetCameraRot().back(), slam.GetCameraPose().back());
         
         RunVisualizationOnly();
         
@@ -98,7 +110,7 @@ int main(int argc, char** argv)
         drawKeypoints(frame, slam.GetCurrKeyFrame().GetTrackedKeypoints(), tracked_features, Scalar(255, 0, 0));
         imshow("Tracked Features", tracked_features);
         
-        waitKey(0);
+//        waitKey(0);
     }
     
     waitKey(0);

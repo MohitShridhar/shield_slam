@@ -36,8 +36,19 @@ namespace vslam
         State GetCurrState(void) { return curr_state; }
         vector<Mat> GetCameraPose(void) { return world_camera_pos; }
         vector<Mat> GetCameraRot(void) { return world_camera_rot; }
-        vector<MapPoint> GetGlobalMap(void) { return global_map_; }
-        KeyFrame GetCurrKeyFrame(void) { return curr_kf; }
+        
+        KeyFrame GetCurrKeyFrame(void)
+        {
+            if (!keyframes.empty())
+                return keyframes.back();
+            else
+            {
+                KeyFrame empty_kf;
+                return empty_kf;
+            }
+        }
+        
+        vector<KeyFrame> GetKeyFrames(void) { return keyframes; }
         
         Ptr<ORB> orb_handler;
         
@@ -52,10 +63,8 @@ namespace vslam
     protected:
         
         Mat initial_frame;
-        KeyFrame curr_kf;
+        vector<KeyFrame> keyframes;
         vector<Mat> world_camera_pos, world_camera_rot;
-        
-        vector<MapPoint> global_map_;
         
         State curr_state, prev_state;
     };

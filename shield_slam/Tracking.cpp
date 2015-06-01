@@ -9,10 +9,11 @@ namespace vslam {
     double Tracking::init_scale =  1.0f;
     bool Tracking::has_scale_init = false;
     
-    bool Tracking::TrackMap(const cv::Mat &gray_frame, KeyFrame& kf, Mat &R, Mat &t, bool& new_kf_added)
+    bool Tracking::TrackMap(const cv::Mat &gray_frame, vector<KeyFrame>& keyframes, Mat &R, Mat &t, bool& new_kf_added)
     {
         Mat Rvec, tvec, pnp_inliers;
-
+        KeyFrame kf = keyframes.back();
+        
         Rodrigues(R, Rvec);
         tvec = t;
 
@@ -22,10 +23,12 @@ namespace vslam {
         KeypointArray tar_kp;
         orb_handler->ExtractFeatures(tar_img, tar_kp, tar_desc);
         
+        /*
         Mat debug_kp;
         drawKeypoints(gray_frame, tar_kp, debug_kp, Scalar(0, 0, 255));
         imshow("Frame KPs", debug_kp);
-        
+        */
+         
         Mat ref_desc;
         PointArray ref_points;
         vector<Point3f> ref_point_cloud;
@@ -49,6 +52,7 @@ namespace vslam {
             object_points.push_back(object_point);
         }
         
+        
         double min_val, max_val;
         minMaxIdx(image_points, &min_val, &max_val);
         
@@ -58,7 +62,7 @@ namespace vslam {
         */
         
         solvePnPRansac(object_points, image_points, camera_matrix, dist_coeff, Rvec, tvec,
-                       true, 100, 8.0f, 100, pnp_inliers, CV_ITERATIVE);
+                       true, 100, 8.0f, 0.8f * (double)(image_points.size()), pnp_inliers, CV_ITERATIVE);
          
         Rodrigues(Rvec, R);
         t = tvec;
@@ -80,6 +84,7 @@ namespace vslam {
         }
         */
         
+        
         kf.IncrementFrameCount();
         KeypointArray ref_kp = kf.GetTotalKeypoints();
         
@@ -91,6 +96,8 @@ namespace vslam {
             
             new_kf_added = NewKeyFrame(kf, R_prev, R, t_prev, t, ref_kp, tar_kp, ref_desc,
                                        tar_desc, matches, pnp_inliers, max_val, object_points);
+            
+            keyframes.push_back(kf);
             return new_kf_added;
         }
         
@@ -150,12 +157,14 @@ namespace vslam {
         // Determine ratio factor for scale consistency check:
         const float ratio_factor = 1.5f * ORB_SCALE_FACTOR;
         
+        
         // Build a hash map of existing point cloud points
         map<int, Point3f> existing_pc;
         for (int i=0; i<pnp_inliers.size().height; i++)
         {
             existing_pc[pnp_inliers.at<int>(i)] = prev_pc.at(i);
         }
+        
         
         /*
         // Find fundamental matrix to determine outliers:
@@ -169,7 +178,7 @@ namespace vslam {
         vector<uchar> f_status(full_orb_matches.size());
         findFundamentalMat(ref_points, tar_points, f_status, FM_RANSAC, 0.006 * max_val, 0.99);
         */
-         
+        
         int num_good_points = 0;
         for (int i=0; i<full_orb_matches.size(); i++)
         {
@@ -193,9 +202,13 @@ namespace vslam {
                 float ref_scale_factor = pow(ORB_SCALE_FACTOR, ref_kp.octave);
                 float tar_scale_factor = pow(ORB_SCALE_FACTOR, tar_kp.octave);
                 
-                Mat ref_point_3D = Mat(3, 1, CV_64F, Scalar(0));
-                Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
+                Mat ref_point_3D = Mat(3, 1, CV_64F, 0.0f);
+//                Triangulate(ref_kp, tar_kp, P1, P2, ref_point_3D);
                 
+                ref_point_3D = LinearLSTriangulation(Point3d(ref_kp.pt.x, ref_kp.pt.y, 1.0),
+                                                     Point3d(tar_kp.pt.x, tar_kp.pt.y, 1.0), P1, P2);
+                
+
                 Mat ref_point_3D_tp = ref_point_3D.t();
                 
                 // Check that the point is finite:
@@ -379,6 +392,7 @@ namespace vslam {
     {
         double scale = 1.0f;
         
+        
         Matx34d Pcam(R.at<double>(0, 0), R.at<double>(0, 1), R.at<double>(0, 2), t.at<double>(0),
                   R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2), t.at<double>(1),
                   R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2), t.at<double>(2));
@@ -440,6 +454,9 @@ namespace vslam {
         }
         
         cv::Mat scalemat = ((A.t() * b) / (A.t() * A));
+        
+//        cout << scalemat << endl;
+        
         scale = scalemat.at<double>(0, 0);
         
         
@@ -467,8 +484,9 @@ namespace vslam {
         
         scalemat = ((A2.t() * b2) / (A2.t() * A2));
         scale2 = scalemat.at<double>(0, 0);
-
-        return scale2;
+    
+        
+        return scale;
     }
     
     void Tracking::FilterPnPInliers(vector<Point3f> &object_points, vector<Point2f> &image_points, Mat& inliers)
@@ -494,19 +512,46 @@ namespace vslam {
     
     void Tracking::Triangulate(const KeyPoint &ref_keypoint, const KeyPoint &tar_keypoint, const Mat &P1, const Mat &P2, Mat &point_3D)
     {
+        Mat A(4,4,CV_64F);
         
-        cv::Mat A(4,4,CV_64F);
+        /*
+        double cam_fx = camera_matrix.at<double>(0, 0);
+        double cam_fy = camera_matrix.at<double>(1, 1);
+        double cam_cx = camera_matrix.at<double>(0, 2);
+        double cam_cy = camera_matrix.at<double>(1, 2);
+        
+        const double u1 = (ref_keypoint.pt.x - cam_cx) / cam_fx;
+        const double v1 = (ref_keypoint.pt.y - cam_cy) / cam_fy;
+        
+        const double u2 = (tar_keypoint.pt.x - cam_cx) / cam_fx;
+        const double v2 = (tar_keypoint.pt.y - cam_cy) / cam_fy;
+        
+        A.row(0) = u1*P1.row(2)-P1.row(0);
+        A.row(1) = v1*P1.row(2)-P1.row(1);
+        A.row(2) = u2*P2.row(2)-P2.row(0);
+        A.row(3) = v2*P2.row(2)-P2.row(1);
+        */
+        
         
         A.row(0) = ref_keypoint.pt.x*P1.row(2)-P1.row(0);
         A.row(1) = ref_keypoint.pt.y*P1.row(2)-P1.row(1);
         A.row(2) = tar_keypoint.pt.x*P2.row(2)-P2.row(0);
         A.row(3) = tar_keypoint.pt.y*P2.row(2)-P2.row(1);
         
-        cv::Mat u,w,vt;
-        cv::SVD::compute(A,w,u,vt,cv::SVD::MODIFY_A| cv::SVD::FULL_UV);
+        
+        Mat u,w,vt;
+        SVD::compute(A,w,u,vt,SVD::MODIFY_A| SVD::FULL_UV);
         point_3D = vt.row(3).t();
         point_3D = point_3D.rowRange(0,3) / point_3D.at<double>(3);
         
+        
+        /*
+        Mat new_point = Mat::zeros(3, 1, CV_64F);
+        new_point.at<double>(0) = point_3D.at<double>(0);
+        new_point.at<double>(1) = point_3D.at<double>(1);
+        new_point.at<double>(2) = point_3D.at<double>(2);
+        
+        point_3D = camera_matrix * new_point;
         
         /*
         Point3d ref_point (ref_keypoint.pt.x, ref_keypoint.pt.y, 1.0);

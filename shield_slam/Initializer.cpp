@@ -11,7 +11,7 @@ namespace vslam
 
     }
     
-    bool Initializer::InitializeMap(Ptr<ORB> orb_handler, Mat &img_ref, Mat &img_tar, KeyFrame &kf, vector<MapPoint> &global_map)
+    bool Initializer::InitializeMap(Ptr<ORB> orb_handler, Mat &img_ref, Mat &img_tar, vector<KeyFrame> &keyframes)
     {
         // Match ORB Features:
         Mat matched_tar_desc;
@@ -25,15 +25,16 @@ namespace vslam
         // Undistort key points using camera intrinsics:
         PointArray undist_ref_matches, undist_tar_matches;
         
-        undistort(ref_matches, undist_ref_matches, camera_matrix, dist_coeff);
-        undistort(tar_matches, undist_tar_matches, camera_matrix, dist_coeff);
-        
         /*
-        undist_ref_matches = ref_matches;
-        undist_tar_matches = tar_matches;
+        undistortPoints(ref_matches, undist_ref_matches, camera_matrix, dist_coeff);
+        undistortPoints(tar_matches, undist_tar_matches, camera_matrix, dist_coeff);
         */
         
         
+        undist_ref_matches = ref_matches;
+        undist_tar_matches = tar_matches;
+        
+         
         // Compute homography and fundamental matrices:
         Mat H = findHomography(undist_ref_matches, undist_tar_matches, CV_RANSAC, 3);
         Mat F = findFundamentalMat(undist_ref_matches, undist_tar_matches, CV_FM_RANSAC, 3, 0.99);
@@ -59,7 +60,7 @@ namespace vslam
         
         PointArray ref_inliers, tar_inliers;
         Mat P1 = Mat::eye(3, 4, CV_64F);
-        Mat P2 = P1.clone();
+        Mat P2 = Mat::eye(3, 4, CV_64F);
         
         // Clear states:
         R = Mat();
@@ -105,8 +106,6 @@ namespace vslam
                     points_2D.push_back(tar_matches.at(i));
                     
                     local_map.push_back(mp);
-                    global_map.push_back(mp);
-                    
                     pc_idx++;
                 }
             }
@@ -115,7 +114,8 @@ namespace vslam
 //            double scale_factor = Tracking::FindLinearScale(R, t, points_2D, points_3D);
 //            Tracking::SetInitScale(scale_factor);
             
-            kf = KeyFrame(R, t, local_map, tar_kp, tar_desc);
+            KeyFrame kf = KeyFrame(R, t, local_map, tar_kp, tar_desc);
+            keyframes.push_back(kf);
             
             // Scale Translation mat
             /*
