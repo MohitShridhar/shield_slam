@@ -53,11 +53,15 @@ public:
 	}
 };
 
+#define KAI_PATH "/Users/neo/Dropbox/231m/shield_slam/"
+#define MOHIT_PATH "/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/"
+
 int main(int argc, char** argv)
 {
-//    VideoCapture cap("/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/indoor.avi");
+    VideoCapture cap(string(KAI_PATH).append("indoor.mov"));
+//    VideoCapture cap(string(MOHIT_PATH).append("indoor.avi"));
 //    VideoCapture cap("/Users/MohitSridhar/Downloads/kitti_youtube.avi");
-    VideoCapture cap("/Users/MohitSridhar/Downloads/VID_20150530_120719.mp4");
+//    VideoCapture cap("/Users/MohitSridhar/Downloads/VID_20150530_120719.mp4");
     
     if (!cap.isOpened())
     {
@@ -73,6 +77,7 @@ int main(int argc, char** argv)
     // Initialize:
     Mat frame;
     cap >> frame;
+    assert(!frame.empty());
     
     Size size(640, 480);
     resize(frame, frame, size);

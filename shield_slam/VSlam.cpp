@@ -3,6 +3,9 @@
 using namespace cv;
 using namespace std;
 
+#define KAI_PATH "/Users/neo/Dropbox/231m/shield_slam/"
+#define MOHIT_PATH "/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/"
+
 namespace vslam
 {
     
@@ -73,7 +76,7 @@ namespace vslam
 
     void VSlam::LoadIntrinsicParameters()
     {
-        FileStorage fs("/Users/MohitSridhar/NCSV/Stanford/CS231M/projects/shield_slam/shield_slam/CameraIntrinsics.yaml", FileStorage::READ);
+        FileStorage fs(string(KAI_PATH).append("shield_slam/CameraIntrinsics.yaml"), FileStorage::READ);
         
         if (!fs.isOpened())
         {
