@@ -1,9 +1,10 @@
 #include "VSlam.hpp"
 #include <opencv2/opencv.hpp>
 
+#include "Augmentor.hpp"
+#include "MapPoint.hpp"
 #include "UpdateListener.hpp"
 #include "Visualizer.hpp"
-#include "MapPoint.hpp"
 
 using namespace cv;
 using namespace std;
@@ -69,53 +70,47 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    // Initialize visualizer and load initial map
     Ptr<VisualizerListener> visualizerListener = new VisualizerListener;
     InitializeVisualizer();
-    
-    vslam::VSlam slam = vslam::VSlam();
-    
-    // Initialize:
-    Mat frame;
-    cap >> frame;
-    assert(!frame.empty());
-    
-    Size size(640, 480);
-    resize(frame, frame, size);
-    
-    // Load Initialized Map:
     RunVisualizationOnly();
     
-    slam.ProcessFrame(frame);
-    
-    for (int i=0; i<1; i++)
-    {
+    // Initialize SLAM
+    Mat frame;
+    Size size(640, 480);
+    vslam::VSlam slam = vslam::VSlam();
+
+    while (true) {
         cap >> frame;
-    }
-    
-    for ( ; ; )
-    {
-        cap >> frame;
-        if (frame.empty())
+        if (frame.empty()) {
             break;
-        
+        }
         
         resize(frame, frame, size);
         slam.ProcessFrame(frame);
         
-        if (waitKey(30) == 27)
-        {
+        if (waitKey(30) == 27) {
             break;
         }
         
+        // Update visualizer
         visualizerListener->update(slam.GetKeyFrames(), slam.GetCameraRot().back(), slam.GetCameraPose().back());
-        
         RunVisualizationOnly();
         
-        Mat tracked_features;
-        drawKeypoints(frame, slam.GetCurrKeyFrame().GetTrackedKeypoints(), tracked_features, Scalar(255, 0, 0));
-        imshow("Tracked Features", tracked_features);
+        // Draw translation and rotation information
+        Augmentor augmentor;
+        KeyFrame currKeyFrame = slam.GetCurrKeyFrame();
+        Mat translationMatrix = currKeyFrame.GetTranslation();
+        augmentor.DisplayTranslation(frame, translationMatrix);
+        Mat rotationMatrix = currKeyFrame.GetRotation();
+        augmentor.DisplayRotation(frame, rotationMatrix);
         
-//        waitKey(0);
+        // Draw keypoints
+        KeypointArray keypoints = currKeyFrame.GetTrackedKeypoints();
+        Mat trackedFeatures;
+        Scalar kpColor = Scalar(255, 0, 0);
+        drawKeypoints(frame, keypoints, trackedFeatures, kpColor);
+        imshow("Tracked Features", trackedFeatures);
     }
     
     waitKey(0);
@@ -123,3 +118,31 @@ int main(int argc, char** argv)
 //    WaitForVisualizationThread();
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -553,7 +553,7 @@ namespace vslam {
         
         point_3D = camera_matrix * new_point;
         
-        /*
+        
         Point3d ref_point (ref_keypoint.pt.x, ref_keypoint.pt.y, 1.0);
         Point3d tar_point (tar_keypoint.pt.x, tar_keypoint.pt.y, 1.0);
         

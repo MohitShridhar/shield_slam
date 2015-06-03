@@ -26,6 +26,8 @@ namespace vslam
     
     void VSlam::ProcessFrame(cv::Mat &img)
     {
+        cvtColor(img, img, CV_BGRA2BGR);
+        
         Mat frame;
         cvtColor(img, frame, CV_RGB2GRAY);
         
@@ -76,15 +78,33 @@ namespace vslam
 
     void VSlam::LoadIntrinsicParameters()
     {
-        FileStorage fs(string(KAI_PATH).append("shield_slam/CameraIntrinsics.yaml"), FileStorage::READ);
+//        FileStorage fs(string(KAI_PATH).append("shield_slam/CameraIntrinsics.yaml"), FileStorage::READ);
+//        
+//        if (!fs.isOpened())
+//        {
+//            CV_Error(0, "VSlam: Could not load calibration file");
+//        }
+//        
+//        fs["cameraMatrix"] >> camera_matrix;
+//        fs["distCoeffs"] >> dist_coeff;
+//        fs["imageSize"] >> img_size;
         
-        if (!fs.isOpened())
-        {
-            CV_Error(0, "VSlam: Could not load calibration file");
-        }
+        // The following is hard-coded for demo purposes on Wed 6/3/15
+        camera_matrix = Mat::zeros(3, 3, CV_64F);
+        camera_matrix.at<double>(0, 0) = .397;
+        camera_matrix.at<double>(0, 1) = 0.0;
+        camera_matrix.at<double>(0, 2) = .418;
+        camera_matrix.at<double>(1, 0) = 0.0;
+        camera_matrix.at<double>(1, 1) = .783;
+        camera_matrix.at<double>(1, 2) = .482;
+        camera_matrix.at<double>(2, 0) = 0.0;
+        camera_matrix.at<double>(2, 1) = 0.0;
+        camera_matrix.at<double>(2, 2) = 1.0;
         
-        fs["cameraMatrix"] >> camera_matrix;
-        fs["distCoeffs"] >> dist_coeff;
-        fs["imageSize"] >> img_size;
+        dist_coeff = Mat::zeros(1, 5, CV_64F);
+        
+        img_size = Mat::zeros(1, 2, CV_64F);
+        img_size.at<double>(0, 0) = 640.0;
+        img_size.at<double>(0, 1) = 480.0;
     }
 }
