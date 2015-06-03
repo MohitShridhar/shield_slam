@@ -72,7 +72,8 @@ obj/local/armeabi-v7a/objs/Artsy/ss/Initializer.o: jni/ss/Initializer.cpp \
  jni/ss/../ss/../ss/KeyFrame.hpp jni/ss/../ss/../ss/../ss/Common.hpp \
  jni/ss/../ss/../ss/../ss/MapPoint.hpp jni/ss/../ss/../ss/MapPoint.hpp \
  jni/ss/../ss/../ss/ORB.hpp jni/ss/../ss/../ss/Tracking.hpp \
- jni/ss/../ss/../ss/../ss/KeyFrame.hpp jni/ss/../ss/../ss/../ss/ORB.hpp
+ jni/ss/../ss/../ss/Common.hpp jni/ss/../ss/../ss/MapPoint.hpp \
+ jni/ss/../ss/../ss/KeyFrame.hpp jni/ss/../ss/../ss/ORB.hpp
 
 jni/ss/../ss/Initializer.hpp:
 
@@ -226,6 +227,10 @@ jni/ss/../ss/../ss/ORB.hpp:
 
 jni/ss/../ss/../ss/Tracking.hpp:
 
-jni/ss/../ss/../ss/../ss/KeyFrame.hpp:
+jni/ss/../ss/../ss/Common.hpp:
 
-jni/ss/../ss/../ss/../ss/ORB.hpp:
+jni/ss/../ss/../ss/MapPoint.hpp:
+
+jni/ss/../ss/../ss/KeyFrame.hpp:
+
+jni/ss/../ss/../ss/ORB.hpp:

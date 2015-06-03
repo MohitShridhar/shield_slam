@@ -167,9 +167,7 @@ public class CameraActivity extends Activity implements CvCameraViewListener2, O
         Mat frame = inputFrame.rgba();
         if (mIsReadyForTracking)
         {
-        	System.err.println("hello!!!!!!!!!!!!!!!!!!");
             HandleFrame(mNativeController, frame.getNativeObjAddr());
-            System.err.println("HandleFrame returns!!!!!!!!!!");
         }
         return frame;
     }

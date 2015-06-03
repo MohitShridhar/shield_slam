@@ -1,5 +1,5 @@
 obj/local/armeabi-v7a/objs/Artsy/ss/VSlam.o: jni/ss/VSlam.cpp \
- jni/ss/../ss/VSlam.hpp \
+ jni/ss/VSlam.hpp \
  /Users/neo/Dropbox/231m/android/OpenCV-2.4.8.2-Tegra-sdk/sdk/native/jni/include/opencv2/opencv.hpp \
  /Users/neo/Dropbox/231m/android/OpenCV-2.4.8.2-Tegra-sdk/sdk/native/jni/include/opencv2/core/core_c.h \
  /Users/neo/Dropbox/231m/android/OpenCV-2.4.8.2-Tegra-sdk/sdk/native/jni/include/opencv2/core/types_c.h \
@@ -66,22 +66,19 @@ obj/local/armeabi-v7a/objs/Artsy/ss/VSlam.o: jni/ss/VSlam.cpp \
  /Users/neo/Dropbox/231m/android/android-ndk-r10d/sources/cxx-stl/gnu-libstdc++/4.8/include/valarray \
  /Users/neo/Dropbox/231m/android/OpenCV-2.4.8.2-Tegra-sdk/sdk/native/jni/include/opencv2/contrib/openfabmap.hpp \
  /Users/neo/Dropbox/231m/android/android-ndk-r10d/sources/cxx-stl/gnu-libstdc++/4.8/include/set \
- jni/ss/../ss/../ss/Common.hpp \
+ jni/ss/../ss/Common.hpp \
  /Users/neo/Dropbox/231m/android/android-ndk-r10d/sources/cxx-stl/gnu-libstdc++/4.8/include/cassert \
  /Users/neo/Dropbox/231m/android/android-ndk-r10d/sources/cxx-stl/gnu-libstdc++/4.8/include/memory \
- jni/ss/../ss/../ss/Initializer.hpp jni/ss/../ss/../ss/../ss/Common.hpp \
- jni/ss/../ss/../ss/../ss/KeyFrame.hpp \
- jni/ss/../ss/../ss/../ss/../ss/Common.hpp \
- jni/ss/../ss/../ss/../ss/../ss/MapPoint.hpp \
- jni/ss/../ss/../ss/../ss/MapPoint.hpp jni/ss/../ss/../ss/../ss/ORB.hpp \
- jni/ss/../ss/../ss/../ss/Tracking.hpp \
- jni/ss/../ss/../ss/../ss/../ss/KeyFrame.hpp \
- jni/ss/../ss/../ss/../ss/../ss/ORB.hpp jni/ss/../ss/../ss/KeyFrame.hpp \
- jni/ss/../ss/../ss/MapPoint.hpp jni/ss/../ss/../ss/ORB.hpp \
- jni/ss/../ss/../ss/Tracking.hpp jni/NativeLogging.hpp \
- /Users/neo/Dropbox/231m/android/android-ndk-r10d/platforms/android-19/arch-arm/usr/include/android/log.h
+ jni/ss/../ss/Initializer.hpp jni/ss/../ss/../ss/Common.hpp \
+ jni/ss/../ss/../ss/KeyFrame.hpp jni/ss/../ss/../ss/../ss/Common.hpp \
+ jni/ss/../ss/../ss/../ss/MapPoint.hpp jni/ss/../ss/../ss/MapPoint.hpp \
+ jni/ss/../ss/../ss/ORB.hpp jni/ss/../ss/../ss/Tracking.hpp \
+ jni/ss/../ss/../ss/Common.hpp jni/ss/../ss/../ss/MapPoint.hpp \
+ jni/ss/../ss/../ss/KeyFrame.hpp jni/ss/../ss/../ss/ORB.hpp \
+ jni/ss/../ss/KeyFrame.hpp jni/ss/../ss/MapPoint.hpp jni/ss/../ss/ORB.hpp \
+ jni/ss/../ss/Tracking.hpp
 
-jni/ss/../ss/VSlam.hpp:
+jni/ss/VSlam.hpp:
 
 /Users/neo/Dropbox/231m/android/OpenCV-2.4.8.2-Tegra-sdk/sdk/native/jni/include/opencv2/opencv.hpp:
 
@@ -215,33 +212,21 @@ jni/ss/../ss/VSlam.hpp:
 
 /Users/neo/Dropbox/231m/android/android-ndk-r10d/sources/cxx-stl/gnu-libstdc++/4.8/include/set:
 
-jni/ss/../ss/../ss/Common.hpp:
+jni/ss/../ss/Common.hpp:
 
 /Users/neo/Dropbox/231m/android/android-ndk-r10d/sources/cxx-stl/gnu-libstdc++/4.8/include/cassert:
 
 /Users/neo/Dropbox/231m/android/android-ndk-r10d/sources/cxx-stl/gnu-libstdc++/4.8/include/memory:
 
-jni/ss/../ss/../ss/Initializer.hpp:
+jni/ss/../ss/Initializer.hpp:
+
+jni/ss/../ss/../ss/Common.hpp:
+
+jni/ss/../ss/../ss/KeyFrame.hpp:
 
 jni/ss/../ss/../ss/../ss/Common.hpp:
 
-jni/ss/../ss/../ss/../ss/KeyFrame.hpp:
-
-jni/ss/../ss/../ss/../ss/../ss/Common.hpp:
-
-jni/ss/../ss/../ss/../ss/../ss/MapPoint.hpp:
-
 jni/ss/../ss/../ss/../ss/MapPoint.hpp:
-
-jni/ss/../ss/../ss/../ss/ORB.hpp:
-
-jni/ss/../ss/../ss/../ss/Tracking.hpp:
-
-jni/ss/../ss/../ss/../ss/../ss/KeyFrame.hpp:
-
-jni/ss/../ss/../ss/../ss/../ss/ORB.hpp:
-
-jni/ss/../ss/../ss/KeyFrame.hpp:
 
 jni/ss/../ss/../ss/MapPoint.hpp:
 
@@ -249,6 +234,18 @@ jni/ss/../ss/../ss/ORB.hpp:
 
 jni/ss/../ss/../ss/Tracking.hpp:
 
-jni/NativeLogging.hpp:
+jni/ss/../ss/../ss/Common.hpp:
 
-/Users/neo/Dropbox/231m/android/android-ndk-r10d/platforms/android-19/arch-arm/usr/include/android/log.h:
+jni/ss/../ss/../ss/MapPoint.hpp:
+
+jni/ss/../ss/../ss/KeyFrame.hpp:
+
+jni/ss/../ss/../ss/ORB.hpp:
+
+jni/ss/../ss/KeyFrame.hpp:
+
+jni/ss/../ss/MapPoint.hpp:
+
+jni/ss/../ss/ORB.hpp:
+
+jni/ss/../ss/Tracking.hpp:

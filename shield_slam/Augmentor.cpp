@@ -74,9 +74,9 @@ void Augmentor::DisplayRotation(Mat& frame, Mat R)
     
     // Render YPR
     putText(frame, yawString, yawBottomLeftCoord,
-            _font_face, _font_scale, _font_color_trans, _font_thickness);
+            _font_face, _font_scale, _font_color_rot, _font_thickness);
     putText(frame, pitchString, pitchBottomLeftCoord,
-            _font_face, _font_scale, _font_color_trans, _font_thickness);
+            _font_face, _font_scale, _font_color_rot, _font_thickness);
     putText(frame, rollString, rollBottomLeftCoord,
-            _font_face, _font_scale, _font_color_trans, _font_thickness);
+            _font_face, _font_scale, _font_color_rot, _font_thickness);
 }

@@ -52,7 +52,13 @@ namespace vslam
             Mat t_vec = world_camera_pos.back().clone();
             
             bool new_kf_added = false;
-            bool is_lost = !Tracking::TrackMap(frame, keyframes, R_vec, t_vec, new_kf_added);
+            KeypointArray new_kps;
+            bool is_lost = !Tracking::TrackMap(frame, keyframes, R_vec, t_vec,
+                                               new_kf_added, new_kps);
+            
+            // Render extracted keypoints to contrast with matched keypoints
+            Scalar kpColor = Scalar(255, 255, 0);
+            drawKeypoints(img, new_kps, img, kpColor);
             
             if (!is_lost)
             {

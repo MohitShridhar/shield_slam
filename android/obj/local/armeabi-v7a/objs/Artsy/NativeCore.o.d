@@ -78,8 +78,8 @@ obj/local/armeabi-v7a/objs/Artsy/NativeCore.o: jni/NativeCore.cpp \
  jni/ss/../ss/../ss/Common.hpp jni/ss/../ss/../ss/KeyFrame.hpp \
  jni/ss/../ss/../ss/MapPoint.hpp jni/ss/../ss/../ss/ORB.hpp \
  jni/ss/../ss/../ss/../ss/Common.hpp jni/ss/../ss/../ss/Tracking.hpp \
- jni/ss/../ss/../ss/../ss/KeyFrame.hpp \
- jni/ss/../ss/../ss/../ss/MapPoint.hpp jni/ss/../ss/../ss/../ss/ORB.hpp \
+ jni/ss/../ss/../ss/Common.hpp jni/ss/../ss/../ss/MapPoint.hpp \
+ jni/ss/../ss/../ss/KeyFrame.hpp jni/ss/../ss/../ss/ORB.hpp \
  jni/ss/../ss/KeyFrame.hpp jni/ss/../ss/ORB.hpp jni/ss/../ss/Tracking.hpp
 
 jni/NativeCore.hpp:
@@ -252,11 +252,13 @@ jni/ss/../ss/../ss/../ss/Common.hpp:
 
 jni/ss/../ss/../ss/Tracking.hpp:
 
-jni/ss/../ss/../ss/../ss/KeyFrame.hpp:
+jni/ss/../ss/../ss/Common.hpp:
 
-jni/ss/../ss/../ss/../ss/MapPoint.hpp:
+jni/ss/../ss/../ss/MapPoint.hpp:
 
-jni/ss/../ss/../ss/../ss/ORB.hpp:
+jni/ss/../ss/../ss/KeyFrame.hpp:
+
+jni/ss/../ss/../ss/ORB.hpp:
 
 jni/ss/../ss/KeyFrame.hpp:
 

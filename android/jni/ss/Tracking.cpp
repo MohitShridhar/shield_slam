@@ -1,4 +1,4 @@
-#include "../ss/Tracking.hpp"
+#include "Tracking.hpp"
 
 using namespace cv;
 using namespace std;
@@ -9,7 +9,8 @@ namespace vslam {
     double Tracking::init_scale =  1.0f;
     bool Tracking::has_scale_init = false;
     
-    bool Tracking::TrackMap(const cv::Mat &gray_frame, vector<KeyFrame>& keyframes, Mat &R, Mat &t, bool& new_kf_added)
+    bool Tracking::TrackMap(const cv::Mat &gray_frame, vector<KeyFrame>& keyframes,
+                            Mat &R, Mat &t, bool& new_kf_added, KeypointArray& tar_kp)
     {
         Mat Rvec, tvec, pnp_inliers;
         KeyFrame kf = keyframes.back();
@@ -18,9 +19,8 @@ namespace vslam {
         tvec = t;
 
         // Find matches with reference to the keyframe
-        Mat tar_desc;
         Mat tar_img = gray_frame;
-        KeypointArray tar_kp;
+        Mat tar_desc;
         orb_handler->ExtractFeatures(tar_img, tar_kp, tar_desc);
         
         /*
