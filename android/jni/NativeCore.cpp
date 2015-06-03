@@ -31,7 +31,6 @@ JNIEXPORT void JNICALL Java_edu_stanford_cvgl_artsy_CameraActivity_DestroyNative
 JNIEXPORT void JNICALL Java_edu_stanford_cvgl_artsy_CameraActivity_HandleFrame
   (JNIEnv *, jobject, jlong addr_native_controller, jlong addr_rgba)
 {
-
 	// Obtain SLAM object and current camera frame
 	vslam::VSlam* slam = (vslam::VSlam*)(addr_native_controller);
 	cv::Mat* frame = (cv::Mat*)(addr_rgba);
