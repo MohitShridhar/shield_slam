@@ -5,11 +5,7 @@ using namespace std;
 
 namespace vslam
 {
-    
-    Initializer::Initializer()
-    {
-
-    }
+    Initializer::Initializer() {}
     
     bool Initializer::InitializeMap(Ptr<ORB> orb_handler, Mat &img_ref, Mat &img_tar, vector<KeyFrame> &keyframes)
     {

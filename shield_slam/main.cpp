@@ -1,5 +1,8 @@
 #include "VSlam.hpp"
+
 #include <opencv2/opencv.hpp>
+#include <ctime>
+#include <iostream>
 
 #include "Augmentor.hpp"
 #include "MapPoint.hpp"
@@ -59,7 +62,8 @@ public:
 
 int main(int argc, char** argv)
 {
-    VideoCapture cap(string(KAI_PATH).append("indoor.mov"));
+    VideoCapture cap(string(KAI_PATH).append("shield_vid.mp4"));
+//    VideoCapture cap(string(KAI_PATH).append("indoor.mov"));
 //    VideoCapture cap(string(MOHIT_PATH).append("indoor.avi"));
 //    VideoCapture cap("/Users/MohitSridhar/Downloads/kitti_youtube.avi");
 //    VideoCapture cap("/Users/MohitSridhar/Downloads/VID_20150530_120719.mp4");
@@ -87,14 +91,21 @@ int main(int argc, char** argv)
         }
         
         resize(frame, frame, size);
+        
+        clock_t start = clock();
         slam.ProcessFrame(frame);
+        clock_t end = clock();
+        
+        double processFrameDuration = (end - start) / (double) CLOCKS_PER_SEC;
+        cout << "processFrameDuration: " << processFrameDuration << endl;
         
         if (waitKey(30) == 27) {
             break;
         }
         
         // Update visualizer
-        visualizerListener->update(slam.GetKeyFrames(), slam.GetCameraRot().back(), slam.GetCameraPose().back());
+        visualizerListener->update(slam.GetKeyFrames(), slam.GetCameraRot().back(), slam.
+                                   GetCameraPose().back());
         RunVisualizationOnly();
         
         // Draw translation and rotation information
@@ -115,7 +126,7 @@ int main(int argc, char** argv)
     
     waitKey(0);
 
-//    WaitForVisualizationThread();
+    WaitForVisualizationThread();
     return 0;
 }
 

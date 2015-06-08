@@ -165,7 +165,6 @@ namespace vslam {
             existing_pc[pnp_inliers.at<int>(i)] = prev_pc.at(i);
         }
         
-        
         /*
         // Find fundamental matrix to determine outliers:
         PointArray ref_points, tar_points;
@@ -207,7 +206,6 @@ namespace vslam {
                 
                 ref_point_3D = LinearLSTriangulation(Point3d(ref_kp.pt.x, ref_kp.pt.y, 1.0),
                                                      Point3d(tar_kp.pt.x, tar_kp.pt.y, 1.0), P1, P2);
-                
 
                 Mat ref_point_3D_tp = ref_point_3D.t();
                 
@@ -472,12 +470,9 @@ namespace vslam {
             cv::Point2d pointx ( Qw.at<double>(0,i),
                                 Qw.at<double>(1,i) );
             
-            //                  Pcam(2,4) * ( Qw(1,i)            / Qw(2,i))            - Pcam(1,4);
             A2.at<double>(i, 0) = Pcam(1,3) * (pointx.x / pointx.y) - Pcam(0,3);
-            
-            //                  (Pcam(1,1:3)-Pcam(2,1:3) *
-            //                  (Qw(1,i) / Qw(2,i))) * X3D(1:3,i)
-            cv::Mat temp = ((cv::Mat) r1 - ((cv::Mat) r2 * (pointx.x / pointx.y))) * (cv::Mat) pointX;
+            cv::Mat temp = ((cv::Mat) r1 - ((cv::Mat) r2 * (pointx.x / pointx.y))) *
+                                            (cv::Mat) pointX;
             b2.at<double>(i, 0) = temp.at<double>(0,0);
         }
         scale2 = (double)((cv::Mat)((cv::Mat(A.t() * A)) * A.t() *b)).at<double>(0,0);

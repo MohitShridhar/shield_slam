@@ -37,7 +37,12 @@ JNIEXPORT void JNICALL Java_edu_stanford_cvgl_artsy_CameraActivity_HandleFrame
 	cvtColor(*frame, *frame, CV_RGBA2BGR);
 
 	// Update SLAM with the current frame
+  // clock_t start = clock();
 	slam->ProcessFrame(*frame);
+  // clock_t end = clock();
+
+  // double processFrameDuration = (end - start) / (double) CLOCKS_PER_SEC;
+  // LOG_ERROR("NativeCore", "processFrameDuration: %f", processFrameDuration);
 
 	// Render XYZ and YPR values of the current keyframe
 	Augmentor augmentor;
