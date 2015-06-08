@@ -5,15 +5,6 @@
 #include "ss/Common.hpp"
 #include "ss/KeyFrame.hpp"
 #include "ss/VSlam.hpp"
-//#include <string>
-
-//static std::string ConvertString(JNIEnv* env, jstring js)
-//{
-//    const char* stringChars = env->GetStringUTFChars(js, 0);
-//    std::string s = std::string(stringChars);
-//    env->ReleaseStringUTFChars(js, stringChars);
-//    return s;
-//}
 
 JNIEXPORT jlong JNICALL Java_edu_stanford_cvgl_artsy_CameraActivity_CreateNativeController
   (JNIEnv *, jobject)
@@ -57,9 +48,3 @@ JNIEXPORT void JNICALL Java_edu_stanford_cvgl_artsy_CameraActivity_HandleFrame
 	Scalar kpColor = Scalar(255, 0, 0);
 	drawKeypoints(*frame, keypoints, *frame, kpColor);
 }
-
-//JNIEXPORT void JNICALL Java_edu_stanford_cvgl_artsy_CameraActivity_SetDataLocation
-//  (JNIEnv* env, jobject, jstring path)
-//{
-//	ar::SetResourceBasePath(ConvertString(env, path));
-//}
